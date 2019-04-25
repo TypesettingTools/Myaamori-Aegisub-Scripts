@@ -561,7 +561,23 @@ include_file = (subtitles, effect)->
         for f in *file_names
             line = factory\create_dialogue_line
                 effect: effect, text: path.relpath(f, script_path), comment: true
+
+            if effect == "import-shifted"
+                vidpos = aegisub.ms_from_frame aegisub.project_properties!.video_position
+                line.start_time = vidpos
+                line.end_time = vidpos
+
             subtitles.append line
+
+add_sync_line = (subtitles, selected_lines, active_line)->
+    factory = LineFactory!
+    vidpos = aegisub.ms_from_frame aegisub.project_properties!.video_position
+    line = factory\create_dialogue_line
+        effect: "sync", comment: true,
+        start_time: vidpos, end_time: vidpos
+
+    subtitles.insert active_line, line
+    return {active_line}, active_line
 
 depctrl\registerMacros {
     {
@@ -575,6 +591,11 @@ depctrl\registerMacros {
         "This is a custom macro that I wrote",
         (subtitles) -> include_file(subtitles, "import-shifted"),
         script_is_saved
+    },
+    {
+        "Add synchronization line for shifted imports",
+        "Adds a synchronization line at the current video time, for use with shifted imports",
+        add_sync_line
     },
     {
         "Import all external files",

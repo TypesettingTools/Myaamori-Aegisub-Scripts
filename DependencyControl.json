@@ -1,0 +1,263 @@
+{
+  "dependencyControlFeedFormatVersion": "0.3.0",
+  "name": "Myaamori's Aegisub scripts",
+  "description": "Main repository for Myaamori's automation macros.",
+  "knownFeeds": {
+    "Functional": "https://raw.githubusercontent.com/TypesettingTools/Functional/master/DependencyControl.json"
+  },
+  "baseUrl": "https://github.com/Myaamori/Myaamori-Aegisub-Scripts",
+  "fileBaseUrl": "https://raw.githubusercontent.com/Myaamori/Myaamori-Aegisub-Scripts",
+  "url": "@{baseUrl}",
+  "maintainer": "Myaamori",
+  "macros": {
+    "myaa.PASQC": {
+      "url": "@{baseUrl}#@{namespace}",
+      "fileBaseUrl": "@{fileBaseUrl}/@{namespace}-v@{version}/macros/@{namespace}",
+      "author": "Myaamori",
+      "name": "PAS QC",
+      "description": "Provides advanced script merging, mainly for use during QC.",
+      "channels": {
+        "release": {
+          "version": "0.0.1",
+          "released": "2019-04-23",
+          "default": true,
+          "files": [
+            {
+              "name": ".moon",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "9C670009350880B31FECCF39010E25EB17370BE0"
+            },
+          ],
+          "requiredModules": [
+            {
+              "moduleName": "l0.Functional",
+              "name": "(Almost) Functional Suite",
+              "url": "https://github.com/TypesettingTools/ASSFoundation",
+              "version": "0.6.0",
+              "feed": "@{feed:Functional}"
+            },
+            {
+              "moduleName": "myaa.pl",
+              "name": "Penlight",
+              "url": "https://github.com/Myaamori/Penlight",
+              "version": "1.6.0"
+            }
+          ]
+        }
+      },
+      "changelog": {
+        "0.0.1": [
+          "Initial release"
+        ]
+      }
+    }
+  },
+  "modules": {
+    "myaa.pl": {
+      "url": "https://github.com/Myaamori/Penlight",
+      "author": "stevedonovan",
+      "name": "Penlight",
+      "description": "Python-inspired utility library.",
+      "fileBaseUrl": "https://raw.githubusercontent.com/Myaamori/Penlight/@{version}-depctrl/lua/pl",
+      "channels": {
+        "release": {
+          "version": "1.6.0",
+          "released": "2018-11-23",
+          "default": true,
+          "files": [
+            {
+              "name": ".lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "F9E540DA5765E1978A1D186F1225A94A1F31FCBC"
+            },
+            {
+              "name": "/app.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "6D672B60F3916EC02A5B817D764415C830993730"
+            },
+            {
+              "name": "/array2d.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "77672278CF457DB25B7476115165D0999A2FEF2C"
+            },
+            {
+              "name": "/class.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "A0942B91D9D9714860B8D13DB31EAB5452754FEB"
+            },
+            {
+              "name": "/compat.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "E623D0BA1ABAEF2C5EF2ED89E83A9AE4EA3D1C5E"
+            },
+            {
+              "name": "/comprehension.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "8484B300EA93DEED9512023417ECAC22A888057E"
+            },
+            {
+              "name": "/config.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "5F4002EDDA4AF761EF56CFF4E64102E7CE41DC30"
+            },
+            {
+              "name": "/data.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "907B66EA8F2193242D56F12830BA0B2B82639D4A"
+            },
+            {
+              "name": "/Date.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "6FD46AF5E30FC0CBBB833FBE4B2A4E8287992A1E"
+            },
+            {
+              "name": "/dir.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "32E2C13B1F5B7375C614EA26A7D751F79B042E1A"
+            },
+            {
+              "name": "/file.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "ECE9F1969C55DBB322CB919D275F6EC9A18C5F86"
+            },
+            {
+              "name": "/func.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "BB5CFC23631CC08F279C07C9565E82B4AEC5C8C3"
+            },
+            {
+              "name": "/input.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "E29921CB8CC2577B8FCD2129FDE4AF0F9175903E"
+            },
+            {
+              "name": "/lapp.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "696FC997BD8560D945AE608DCE7E749DF3DF8A2C"
+            },
+            {
+              "name": "/lexer.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "DFB4FDFC8FBB956F27DA20F2D9ABDAC5F19BCAF5"
+            },
+            {
+              "name": "/List.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "750B703353A226C87116345A7E25F9654FB399DC"
+            },
+            {
+              "name": "/luabalanced.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "5BB770DED7A6F871870C56061B81981078044771"
+            },
+            {
+              "name": "/Map.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "F9BF2C1CD494F170AB16D697212AE1DF82A83300"
+            },
+            {
+              "name": "/MultiMap.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "978BCCFF01A3A0A9CD99ECDD2C49C9AE6CFE01DD"
+            },
+            {
+              "name": "/operator.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "6B5AD186D9578CF155381F79B6C885A91BBC647A"
+            },
+            {
+              "name": "/OrderedMap.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "D144BBD25E26120DE9451314CAC369AEF6B9AB6A"
+            },
+            {
+              "name": "/path.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "8B127C346FCCB39079EFA2BD6EC3F5C17FC1D89B"
+            },
+            {
+              "name": "/permute.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "EC30713D1B8E9937230B216637BC693987737F95"
+            },
+            {
+              "name": "/pretty.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "50E0E4C2371A36A4CD264C0AC7E1B7E98BE081CA"
+            },
+            {
+              "name": "/seq.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "09DE58853DF038503DCD32184B5DFFFDF2929B9C"
+            },
+            {
+              "name": "/Set.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "DB79214C253BC3E65D5265D44AD467CB0F2B32F4"
+            },
+            {
+              "name": "/sip.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "266A44F0F357FCD9A4D260038AD802BC89B94867"
+            },
+            {
+              "name": "/strict.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "F6ACC7943799109AD35C99B3FD5ABAC99BAB0560"
+            },
+            {
+              "name": "/stringio.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "C1F9FAD46450B191FD2332B65B85D1A19A7F0792"
+            },
+            {
+              "name": "/stringx.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "39074D0ED7CD02F42F437BD68E2F8C64C9B5343E"
+            },
+            {
+              "name": "/tablex.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "A9B8F96650C87A713F8FD74CE1CE6D57F699952C"
+            },
+            {
+              "name": "/template.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "D79BE84D6B8434AEB05D0530F75091F375445F8B"
+            },
+            {
+              "name": "/test.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "47DE45B803EA3CC1B93A64A5756809BC2620E0E7"
+            },
+            {
+              "name": "/text.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "0C9C73FB1F28B7444E126800C8F1FF81A143169D"
+            },
+            {
+              "name": "/types.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "7180BC5775571C0763610B3F721DA97E025AE886"
+            },
+            {
+              "name": "/url.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "C78509E34A1BFA1A39E672A3C132083A10566F62"
+            },
+            {
+              "name": "/utils.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "E3F93E2B99ACD300E9CC760BBF5CC85F5AE2DEBA"
+            },
+            {
+              "name": "/xml.lua",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "7F69C2A9513B63A8077648D8EB81FDBB8A848113"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

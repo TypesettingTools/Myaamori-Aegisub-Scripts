@@ -9,13 +9,15 @@ DependencyControl = require 'l0.DependencyControl'
 depctrl = DependencyControl {
     {
         "aegisub.util", "aegisub.re", "json",
-        "pl.path", "pl.stringx",
+        {"myaa.pl", version: "1.6.0", url: "https://github.com/Myaamori/Penlight",
+         feed: "https://raw.githubusercontent.com/Myaamori/Myaamori-Aegisub-Scripts/master/DependencyControl.json"}
         {"l0.Functional", version: "0.6.0", url: "https://github.com/TypesettingTools/Functional",
          feed: "https://raw.githubusercontent.com/TypesettingTools/Functional/master/DependencyControl.json"}
     }
 }
 
-util, re, json, path, stringx, F = depctrl\requireModules!
+util, re, json, pl, F = depctrl\requireModules!
+{:path, :stringx} = pl
 stringx.import!
 
 import lshift, rshift, band, bor from bit

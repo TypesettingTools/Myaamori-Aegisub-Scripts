@@ -582,13 +582,13 @@ add_sync_line = (subtitles, selected_lines, active_line)->
 depctrl\registerMacros {
     {
         "Add file to include",
-        "This is a custom macro that I wrote",
+        "Adds an import definition signifying an external file to be imported",
         (subtitles) -> include_file(subtitles, "import"),
         script_is_saved
     },
     {
         "Add file to include (shifted)",
-        "This is a custom macro that I wrote",
+        "Adds an import definition signifying an external file to be imported and shifted based on the synchronization line",
         (subtitles) -> include_file(subtitles, "import-shifted"),
         script_is_saved
     },
@@ -599,34 +599,34 @@ depctrl\registerMacros {
     },
     {
         "Import all external files",
-        "Custom macro",
+        "Import lines from external files corresponding to all import definitions in this file",
         (subtitles, selected_lines) -> merge(subtitles, nil),
         script_is_saved
     },
     {
         "Import selected external file(s)",
-        "Custom macro",
+        "Import lines from external files corresponding to the selected import definitions",
         (subtitles, selected_lines) -> merge(subtitles, selected_lines),
         script_is_saved
     },
     {
         "Remove all external files",
-        "Custom macro",
+        "Remove all lines in the file that were imported from external files",
         (subtitles, selected_lines) -> clear_merged(subtitles, nil)
     },
     {
         "Remove selected external file(s)",
-        "Custom macro",
+        "Remove the lines in the file that were imported from external files corresponding to the selected lines",
         (subtitles, selected_lines) -> clear_merged(subtitles, selected_lines)
     },
     {
         "Generate release candidate",
-        "Removes comments and style namespaces.",
+        "Removes comments and style namespaces",
         generate_release
     },
     {
         "Export changes",
-        "Export changes to imported lines to source files.",
+        "Export changes to imported lines to source files",
         export_changes
     }
 }

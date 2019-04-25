@@ -18,14 +18,14 @@
       "description": "Provides advanced script merging, mainly for use during QC.",
       "channels": {
         "release": {
-          "version": "0.0.1",
+          "version": "0.0.2",
           "released": "2019-04-23",
           "default": true,
           "files": [
             {
               "name": ".moon",
               "url": "@{fileBaseUrl}@{fileName}",
-              "sha1": "9C670009350880B31FECCF39010E25EB17370BE0"
+              "sha1": "12718AB26102E6A311FCAA02EDBAB65F43584005"
             },
           ],
           "requiredModules": [
@@ -48,6 +48,10 @@
       "changelog": {
         "0.0.1": [
           "Initial release"
+        ],
+        "0.0.2": [
+          "Add menu option for generating a synchronization line",
+          "Use video position for synchronization line and shifted import definition start time"
         ]
       }
     }

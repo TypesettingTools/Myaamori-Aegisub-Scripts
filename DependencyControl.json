@@ -5,8 +5,8 @@
   "knownFeeds": {
     "Functional": "https://raw.githubusercontent.com/TypesettingTools/Functional/master/DependencyControl.json"
   },
-  "baseUrl": "https://github.com/Myaamori/Myaamori-Aegisub-Scripts",
-  "fileBaseUrl": "https://raw.githubusercontent.com/Myaamori/Myaamori-Aegisub-Scripts",
+  "baseUrl": "https://github.com/TypesettingTools/Myaamori-Aegisub-Scripts",
+  "fileBaseUrl": "https://raw.githubusercontent.com/TypesettingTools/Myaamori-Aegisub-Scripts",
   "url": "@{baseUrl}",
   "maintainer": "Myaamori",
   "macros": {
@@ -39,7 +39,7 @@
             {
               "moduleName": "myaa.pl",
               "name": "Penlight",
-              "url": "https://github.com/Myaamori/Penlight",
+              "url": "https://github.com/TypesettingTools/Penlight",
               "version": "1.6.0"
             }
           ]
@@ -58,11 +58,11 @@
   },
   "modules": {
     "myaa.pl": {
-      "url": "https://github.com/Myaamori/Penlight",
+      "url": "https://github.com/TypesettingTools/Penlight",
       "author": "stevedonovan",
       "name": "Penlight",
       "description": "Python-inspired utility library.",
-      "fileBaseUrl": "https://raw.githubusercontent.com/Myaamori/Penlight/@{version}-depctrl/lua/pl",
+      "fileBaseUrl": "https://raw.githubusercontent.com/TypesettingTools/Penlight/@{version}-depctrl/lua/pl",
       "channels": {
         "release": {
           "version": "1.6.0",

@@ -1,9 +1,9 @@
 
-export script_name = "PAS QC"
+export script_name = "Merge Scripts"
 export script_description = "Experimental automation for QC merging/exporting"
-export script_version = "0.0.1"
+export script_version = "0.0.2"
 export script_author = "Myaamori"
-export script_namespace = "myaa.PASQC"
+export script_namespace = "myaa.MergeScripts"
 
 DependencyControl = require 'l0.DependencyControl'
 depctrl = DependencyControl {
@@ -176,6 +176,9 @@ uudecode = (input)->
 
 get_format = (format_string)-> [match for match in format_string\gmatch "([^, ]+)"]
 
+get_data = (line)->
+    line.extra and line.extra[script_namespace] and json.decode line.extra[script_namespace]
+
 parse_file = (filename, line_factory)->
     current_section = nil
 
@@ -274,7 +277,7 @@ merge = (subtitles, selected_lines)->
     -- keep track of indices already used for namespaces to avoid duplicates
     used_indices = {}
     for line in *subtitles
-        data = line.extra and line.extra.PASQC and json.decode line.extra.PASQC
+        data = get_data line
         if data
             used_indices[data.index] = true
 
@@ -284,7 +287,7 @@ merge = (subtitles, selected_lines)->
         line = subtitles[i]
         -- find import definitions among selected lines
         if (line.effect != "import" and line.effect != "import-shifted") or
-                (line.extra and line.extra.PASQC)
+                (line.extra and line.extra[script_namespace])
             continue
         index += 1
         while used_indices[index]
@@ -315,7 +318,7 @@ merge = (subtitles, selected_lines)->
                 event_line.end_time -= start_diff
 
         -- add extra data
-        line.extra.PASQC = json.encode extra_data
+        line.extra[script_namespace] = json.encode extra_data
         subtitles[i] = line
 
         table.insert lines, {index, i, styles, events}
@@ -351,8 +354,8 @@ clear_merged = (subtitles, selected_lines)->
         if line.class != "dialogue"
             continue
 
-        if line.extra and line.extra.PASQC
-            data = json.decode line.extra.PASQC
+        data = get_data line
+        if data
             indices_to_clear[data.index] = true
             continue
 
@@ -370,9 +373,9 @@ clear_merged = (subtitles, selected_lines)->
                 table.insert lines_to_delete, i
         elseif line.class == "dialogue"
             -- clear extradata on import lines but don't remove them
-            data = line.extra and line.extra.PASQC and json.decode line.extra.PASQC
+            data = get_data line
             if data and indices_to_clear[data.index]
-                line.extra.PASQC = nil
+                line.extra[script_namespace] = nil
                 subtitles[i] = line
                 continue
 
@@ -397,7 +400,7 @@ generate_release = (subtitles, selected_lines, active_line)->
             table.insert dialogue_lines, {i, line}
 
         -- find the source files for each namespace for error reporting
-        data = line.extra and line.extra.PASQC and json.decode line.extra.PASQC
+        data = get_data line
         if data
             files[data.index] = line.text
 
@@ -491,7 +494,7 @@ export_changes = (subtitles, selected_lines, active_line)->
 
     -- find import definition lines and construct the corresponding output files
     for sub in *subtitles
-        data = sub.extra and sub.extra.PASQC and json.decode sub.extra.PASQC
+        data = get_data sub
         if not data
             continue
 

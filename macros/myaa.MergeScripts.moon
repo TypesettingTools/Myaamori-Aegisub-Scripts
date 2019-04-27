@@ -30,26 +30,6 @@ STYLE_FORMAT_STRING = "Name, Fontname, Fontsize, PrimaryColour, SecondaryColour,
 EVENT_FORMAT_STRING = "Layer, Start, End, Style, Name, MarginL, MarginR, " ..
         "MarginV, Effect, Text"
 
-find = (tbl, predicate)->
-    for i, v in ipairs tbl
-        return v, i if predicate v, i, tbl
-
-split = (str, sep = " ", num_splits = -1) ->
-    init = 1
-    first, last = str\find sep, 1, true
-    -- fast return if there's nothing to split - saves one str.sub()
-    return {str} if not first
-
-    splits, s = {}, 1
-    while first and s != num_splits
-        splits[s] = str\sub init, first - 1
-        s += 1
-        init = last + 1
-        first, last = str\find sep, init, plain
-
-    splits[s] = str\sub init
-    return splits, s
-
 assTimecode2ms = (tc) ->
     local split
     split, num = {tc\match "^(%d):(%d%d):(%d%d)%.(%d%d)$"}, tonumber
@@ -102,7 +82,7 @@ class LineFactory
     create_style_line: (fields)=> @create_line_from @@style_defaults, fields
 
     from_raw: (type, raw, format, extradata)=>
-        elements = split raw, ",", #format
+        elements = raw\split ",", #format
         return nil if #elements != #format
 
         fields = {format[i], elements[i] for i=1,#elements}

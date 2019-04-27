@@ -77,7 +77,10 @@ class LineFactory
                 line[key] = value
         return line
 
-    create_dialogue_line: (fields)=> @create_line_from @@dialogue_defaults, fields
+    create_dialogue_line: (fields)=>
+        line = @create_line_from @@dialogue_defaults, fields
+        line.extra = line.extra or {}
+        line
 
     create_style_line: (fields)=> @create_line_from @@style_defaults, fields
 
@@ -101,6 +104,7 @@ class LineFactory
             if extramatch
                 line.text = extramatch[3].str
                 for key in extramatch[2].str\gmatch "=(%d+)"
+                    key = tonumber key
                     if extradata[key]
                         {field, value} = extradata[key]
                         line.extra[field] = value
@@ -124,6 +128,16 @@ class LineFactory
 
             return line
 
+inline_string_encode = (input)->
+    output = {}
+    for i=1,#input
+        c = input\byte i
+        if c <= 0x1F or c == 0x23 or c == 0x2C or c == 0x3A or c == 0x7C
+            table.insert output, string.format "#%02X", c
+        else
+            table.insert output, input\sub i,i
+    return table.concat output
+
 inline_string_decode = (input)->
     output = {}
     i = 1
@@ -135,6 +149,24 @@ inline_string_decode = (input)->
             i += 2
         i += 1
     return table.concat output
+
+uuencode = (input)->
+    ret = {}
+    for pos=1,#input,3
+        chunk = input\sub pos, pos+2
+        src = [c\byte! for c in chunk\gmatch "."]
+        while #src < 3
+            src[#src+1] = 0
+
+        dst = {(rshift src[1], 2),
+               (bor (lshift (band src[1], 0x3), 4), (rshift (band src[2], 0xF0), 4)),
+               (bor (lshift (band src[2], 0xF), 2), (rshift (band src[3], 0xC0), 6)),
+               (band src[3], 0x3F)}
+
+        for i=1,math.min(#input - pos + 2, 4)
+            table.insert ret, dst[i] + 33
+
+    return table.concat [string.char i for i in *ret]
 
 uudecode = (input)->
     ret = {}
@@ -209,6 +241,7 @@ parse_file = (filename, line_factory)->
             else
                 data = uudecode data
 
+            num = tonumber num
             extradata[num] = {dkey, data}
 
     -- retrieve script info
@@ -280,8 +313,14 @@ merge = (subtitles, selected_lines)->
             aegisub.log "ERROR: #{styles}\n"
             return
 
+        -- keep track of original indices for extradata
+        extrakeys = {}
+        for i, {key, value} in pairs extradata
+            extrakeys[key] = extrakeys[key] or {}
+            extrakeys[key][value] = i
+
         -- bookkeeping (needed for export etc)
-        extra_data = {index: index, file: file_path}
+        extra_data = {index: index, file: file_path, extrakeys: extrakeys}
 
         if line.effect == "import-shifted"
             -- find sync line in external file and shift lines to match the import line
@@ -513,11 +552,59 @@ export_changes = (subtitles, selected_lines, active_line)->
         if data.sync_line
             sync_diff = sub.start_time - data.sync_line
 
+        extrakeys = data.extrakeys
+        last_index = 0
+        for key, v in pairs extrakeys
+            for value, index in pairs v
+                last_index = math.max last_index, index
+
+        extradata_to_write = {}
+
         if flines
             for line in *flines["dialogue"]
                 line.start_time = math.max(line.start_time - sync_diff, 0)
                 line.end_time = math.max(line.end_time - sync_diff, 0)
+
+                -- handle extradata
+                extradata_ind = {}
+                if line.extra
+                    lineindices = {}
+                    for key, value in pairs line.extra
+                        -- look for data in the original file's extradata
+                        extra_index = extrakeys[key] and extrakeys[key][value]
+                        if not extra_index
+                            -- if new extradata, generate new index and cache it
+                            last_index += 1
+                            extra_index = last_index
+                            extrakeys[key] = extrakeys[key] or {}
+                            extrakeys[key][value] = extra_index
+
+                        table.insert lineindices, extra_index
+                        extradata_to_write[extra_index] = {key, value}
+
+                    -- add indices to line text (e.g. {=32=33}Text)
+                    if #lineindices > 0
+                        table.sort lineindices
+                        indexstring = table.concat ["=#{ind}" for ind in *lineindices]
+                        line.text = "{#{indexstring}}" .. line.text
+
                 table.insert out_text, line_to_raw(line) .. "\n"
+
+            out_indices = [ind for ind, _ in pairs extradata_to_write]
+            if #out_indices > 0
+                table.insert out_text, "\n[Aegisub Extradata]\n"
+
+                table.sort out_indices
+                for ind in *out_indices
+                    {key, value} = extradata_to_write[ind]
+                    encoded_data = inline_string_encode value
+                    -- a mystical incantation passed down from subtitle_format_ass.cpp
+                    if 4*#value < 3*#encoded_data
+                        value = "u" .. uuencode value
+                    else
+                        value = "e" .. encoded_data
+                    table.insert out_text, "Data: #{ind},#{key},#{value}\n"
+
 
         outputs[data.file] = table.concat out_text
 

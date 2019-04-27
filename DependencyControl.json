@@ -10,11 +10,11 @@
   "url": "@{baseUrl}",
   "maintainer": "Myaamori",
   "macros": {
-    "myaa.PASQC": {
+    "myaa.MergeScripts": {
       "url": "@{baseUrl}#@{namespace}",
       "fileBaseUrl": "@{fileBaseUrl}/@{namespace}-v@{version}/macros/@{namespace}",
       "author": "Myaamori",
-      "name": "PAS QC",
+      "name": "Merge Scripts",
       "description": "Provides advanced script merging, mainly for use during QC.",
       "channels": {
         "release": {

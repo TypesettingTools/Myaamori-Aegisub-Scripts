@@ -18,14 +18,14 @@
       "description": "Provides advanced script merging, mainly for use during QC.",
       "channels": {
         "release": {
-          "version": "0.0.2",
+          "version": "0.0.3",
           "released": "2019-04-23",
           "default": true,
           "files": [
             {
               "name": ".moon",
               "url": "@{fileBaseUrl}@{fileName}",
-              "sha1": "D56B820FF24CCF5D8495F5045AC37F5184D80DAE"
+              "sha1": "60FD1B547E3F7C32E1E3F71D801803208D36200D"
             },
           ],
           "requiredModules": [

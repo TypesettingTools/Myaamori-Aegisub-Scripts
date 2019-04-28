@@ -18,14 +18,14 @@
       "description": "Provides advanced script merging, mainly for use during QC.",
       "channels": {
         "release": {
-          "version": "0.0.4",
+          "version": "0.0.5",
           "released": "2019-04-23",
           "default": true,
           "files": [
             {
               "name": ".moon",
               "url": "@{fileBaseUrl}@{fileName}",
-              "sha1": "DFD478CAD7998B7B19056F35B3FF15B60C213190"
+              "sha1": "1E9ACC5B761BFBB40D143C8F8A12B994004C6FA6"
             },
           ],
           "requiredModules": [
@@ -58,6 +58,11 @@
         ],
         "0.0.4": [
           "Fix some lines not being parsed correcty due to buggy split function"
+        ],
+        "0.0.5": [
+          "Automatically set script properties from imported files",
+          "Warn about conflicting script properties",
+          "Abort cleanly if a file could not be read"
         ]
       }
     }

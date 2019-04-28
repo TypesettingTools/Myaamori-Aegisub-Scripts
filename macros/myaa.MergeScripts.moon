@@ -196,7 +196,7 @@ parse_file = (filename, line_factory)->
 
     file = io.open filename
     if not file
-        return nil, "Could not open file"
+        return nil, "Could not find #{filename}"
 
     sections = {}
 
@@ -336,11 +336,7 @@ merge = (subtitles, selected_lines)->
                 event_line.start_time -= start_diff
                 event_line.end_time -= start_diff
 
-        -- add extra data
-        line.extra[script_namespace] = json.encode extra_data
-        subtitles[i] = line
-
-        table.insert lines, {index, i, styles, events}
+        table.insert lines, {index, i, styles, events, extra_data}
 
     _, first_dialogue = F.list.find subtitles, (x)-> x.class == "dialogue"
 
@@ -349,7 +345,13 @@ merge = (subtitles, selected_lines)->
     offset = 0
     style_offset = 0
     -- insert external lines
-    for {i, ref_pos, styles, events} in *lines
+    for {i, ref_pos, styles, events, extra_data} in *lines
+        -- add extra data
+        import_line_pos = ref_pos + offset
+        import_line = subtitles[import_line_pos]
+        import_line.extra[script_namespace] = json.encode extra_data
+        subtitles[import_line_pos] = import_line
+
         for style in *styles
             style.name = "#{i}$" .. style.name
             -- insert style before the first dialogue line

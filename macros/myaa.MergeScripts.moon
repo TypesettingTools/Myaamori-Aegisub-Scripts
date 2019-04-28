@@ -294,6 +294,9 @@ merge = (subtitles, selected_lines)->
         if data
             used_indices[data.index] = true
 
+    check_fields = {"PlayResY", "PlayResX", "YCbCr Matrix", "WrapStyle"}
+    seen_values = {field, {} for field in *check_fields}
+
     lines = {}
     index = 0
     for i in *selected_lines
@@ -312,6 +315,11 @@ merge = (subtitles, selected_lines)->
         if not script_info
             aegisub.log "ERROR: #{styles}\n"
             return
+
+        for field in *check_fields
+            field_value = script_info[field]
+            seen_values[field][field_value] = seen_values[field][field_value] or {}
+            table.insert seen_values[field][field_value], line.text
 
         -- keep track of original indices for extradata
         extrakeys = {}
@@ -337,6 +345,58 @@ merge = (subtitles, selected_lines)->
                 event_line.end_time -= start_diff
 
         table.insert lines, {index, i, styles, events, extra_data}
+
+    -- don't set script info if no lines found
+    if #lines == 0
+        return
+
+    -- check for conflicting script info
+    current_script_info = {}
+    for i, line in ipairs subtitles
+        if line.class == "info"
+            current_script_info[line.key] = {index: i, line: line}
+
+    dialogue_fields = {
+        {x: 0, y: 0, height: 1, width: 20, class: "label", label: "Conflicting values found:"}
+    }
+    conflicting_fields = {}
+    -- use values from current script as default values
+    confirmed_fields = {field, current_script_info[field].line.value for field in *check_fields}
+    i = 1
+    for field in *check_fields
+        values = [key for key, _ in pairs seen_values[field]]
+        if #values > 1
+            table.insert conflicting_fields, field
+            hint = {}
+            for field_value in *values
+                for filename in *seen_values[field][field_value]
+                    table.insert hint, "#{filename}: #{field_value}"
+            hint = table.concat hint, "\n"
+
+            table.insert dialogue_fields, {
+                class: "label", label: field, x: 0, y: i, height: 1, width: 10
+            }
+            table.insert dialogue_fields, {
+                class: "dropdown", items: values, value: values[1],
+                x: 10, y: i, height: 1, width: 10, hint: hint, name: field
+            }
+            i += 1
+        -- if no values found in external scripts, keep current value
+        elseif #values == 1
+            confirmed_fields[field] = values[1]
+
+    if #conflicting_fields > 0
+        button, result = aegisub.dialog.display dialogue_fields
+        if not button
+            return
+        for field in *conflicting_fields
+            confirmed_fields[field] = result[field]
+
+    for field, field_value in pairs confirmed_fields
+        {:index, :line} = current_script_info[field]
+        line.value = field_value
+        subtitles[index] = line
+
 
     _, first_dialogue = F.list.find subtitles, (x)-> x.class == "dialogue"
 

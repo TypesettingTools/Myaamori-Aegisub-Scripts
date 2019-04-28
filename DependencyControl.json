@@ -18,14 +18,14 @@
       "description": "Provides advanced script merging, mainly for use during QC.",
       "channels": {
         "release": {
-          "version": "0.0.3",
+          "version": "0.0.4",
           "released": "2019-04-23",
           "default": true,
           "files": [
             {
               "name": ".moon",
               "url": "@{fileBaseUrl}@{fileName}",
-              "sha1": "60FD1B547E3F7C32E1E3F71D801803208D36200D"
+              "sha1": "DFD478CAD7998B7B19056F35B3FF15B60C213190"
             },
           ],
           "requiredModules": [
@@ -52,6 +52,12 @@
         "0.0.2": [
           "Add menu option for generating a synchronization line",
           "Use video position for synchronization line and shifted import definition start time"
+        ],
+        "0.0.3": [
+          "Make sure extradata from automations is preserved on export"
+        ],
+        "0.0.4": [
+          "Fix some lines not being parsed correcty due to buggy split function"
         ]
       }
     }

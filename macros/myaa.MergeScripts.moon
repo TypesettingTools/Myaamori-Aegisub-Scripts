@@ -1,7 +1,7 @@
 
 export script_name = "Merge Scripts"
 export script_description = "Experimental automation for QC merging/exporting"
-export script_version = "0.0.3"
+export script_version = "0.0.4"
 export script_author = "Myaamori"
 export script_namespace = "myaa.MergeScripts"
 

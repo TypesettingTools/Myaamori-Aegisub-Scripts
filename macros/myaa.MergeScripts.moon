@@ -85,7 +85,7 @@ class LineFactory
     create_style_line: (fields)=> @create_line_from @@style_defaults, fields
 
     from_raw: (type, raw, format, extradata)=>
-        elements = raw\split ",", #format
+        elements = F.string.split raw, ",", 1, true, #format-1
         return nil if #elements != #format
 
         fields = {format[i], elements[i] for i=1,#elements}
@@ -378,7 +378,7 @@ clear_merged = (subtitles, selected_lines)->
             indices_to_clear[data.index] = true
             continue
 
-        {ind, style} = line.style\split "$", 2
+        {ind, style} = F.string.split line.style, "$", 1, true, 1
         if style and tonumber(ind) != nil
             indices_to_clear[tonumber ind] = true
 
@@ -386,7 +386,7 @@ clear_merged = (subtitles, selected_lines)->
     lines_to_delete = {}
     for i, line in ipairs subtitles
         if line.class == "style"
-            {ind, style} = line.name\split "$", 2
+            {ind, style} = F.string.split line.name, "$", 1, true, 1
             ind = tonumber ind
             if style and ind != nil and indices_to_clear[ind]
                 table.insert lines_to_delete, i
@@ -398,7 +398,7 @@ clear_merged = (subtitles, selected_lines)->
                 subtitles[i] = line
                 continue
 
-            {ind, style} = line.style\split "$", 2
+            {ind, style} = F.string.split line.style, "$", 1, true, 1
             ind = tonumber ind
             if style and ind != nil and indices_to_clear[ind]
                 table.insert lines_to_delete, i
@@ -431,7 +431,7 @@ generate_release = (subtitles, selected_lines, active_line)->
     added_styles = {}
     clashing_styles = false
     for style in *styles
-        {file, sname} = style.name\split "$", 2
+        {file, sname} = F.string.split style.name, "$", 1, true, 1
         if used_styles[style.name]
             if sname
                 index = tonumber file
@@ -451,7 +451,7 @@ generate_release = (subtitles, selected_lines, active_line)->
 
     -- remove namespace from dialogue lines
     for {i, dialogue} in *dialogue_lines
-        {file, sname} = dialogue.style\split "$", 2
+        {file, sname} = F.string.split dialogue.style, "$", 1, true, 1
         if sname
             dialogue.style = sname
 
@@ -494,10 +494,10 @@ export_changes = (subtitles, selected_lines, active_line)->
         if line.class == "style" or line.class == "dialogue"
             local file, style
             if line.class == "style"
-                {file, style} = line.name\split "$", 2
+                {file, style} = F.string.split line.name, "$", 1, true, 1
                 line.name = style
             elseif line.class == "dialogue"
-                {file, style} = line.style\split "$", 2
+                {file, style} = F.string.split line.style, "$", 1, true, 1
                 line.style = style
 
             -- current line should not be exported

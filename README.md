@@ -96,7 +96,7 @@ If the executable is not in your path, you can run Sub Digest as `python -m subd
 ### Workflow
 
 The arguments to Sub Digest are processed as consecutive commands, with the output of one command being fed as the input to the next.
-If you run e.g. `--sort-field start ASC --sort-field style ASC`, it will first sort by start time and then by
+If you run e.g. `--sort-field start ASC --sort-field style ASC`, it will first sort by start time and then by style name.
 
 By default Sub Digests works on the events section of the file, which contains the dialogue lines.
 You can use the `--use-styles` argument to switch to the styles section instead, so that any following arguments will modify the styles section.

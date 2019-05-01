@@ -684,6 +684,29 @@ export_changes = (subtitles, selected_lines, active_line)->
 script_is_saved = (subtitles, selected_lines, active_line)->
     aegisub.decode_path("?script") != "?script"
 
+relpath = (f, script_path)->
+    rpath = path.relpath f, script_path
+
+    if not path.is_windows
+        return rpath
+
+    -- recover original capitalization by replacing the end of
+    -- the case normalized path with the corresponding part from the
+    -- original f
+    f = path.normpath f
+    local k
+    k = 0
+    for i=1,math.min(#f, #rpath)
+        ri = #rpath - i + 1
+        fi = #f - i + 1
+        if rpath\sub(ri, ri) != f\sub(fi, fi)\lower!
+            break
+        k = i
+
+    rpath = (rpath\sub 1, #rpath - k) .. (f\sub #f - k + 1, #f)
+    return rpath\gsub '\\', '/'
+
+
 include_file = (subtitles, effect)->
     script_path = aegisub.decode_path("?script") .. "/"
     file_names = aegisub.dialog.open "Choose file to include", "", script_path, "*.ass", true
@@ -692,7 +715,7 @@ include_file = (subtitles, effect)->
     if file_names
         for f in *file_names
             line = factory\create_dialogue_line
-                effect: effect, text: path.relpath(f, script_path), comment: true
+                effect: effect, text: relpath(f, script_path), comment: true
 
             if effect == "import-shifted"
                 vidpos = aegisub.ms_from_frame aegisub.project_properties!.video_position

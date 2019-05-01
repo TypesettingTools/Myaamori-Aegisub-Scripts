@@ -69,4 +69,112 @@ It will also warn about conflicting style names.
 
 ## Sub Digest
 
+### Overview
 
+```
+subdigest -i script.ass --selection-set style "Default|Alt" --keep-selected --remove-unused-styles --sort-field start ASC
+```
+
+Sub Digest is a utility for quick processing of ASS files.
+At the basic level it can do e.g. sorting, simple replacement, and modification of values using Python expressions.
+However, most of its power comes from the use of *selections*, which make it possible to operate on just a subset of the file.
+
+Sub Digest makes use of [python-ass](https://github.com/chireiden/python-ass), and inherits many of its conventions, including field names.
+It is highly recommended to familiarize yourself with python-ass first before making use of Sub Digest.
+
+### Installation
+
+Install Sub Digest with pip:
+
+```
+pip install git+https://github.com/TypesettingTools/Myaamori-Aegisub-Scripts/#subdirectory=scripts/sub-digest
+```
+
+This will add a `subdigest` executable along with the `subdigest.py` Python module.
+If the executable is not in your path, you can run Sub Digest as `python -m subdigest --help`.
+
+### Workflow
+
+The arguments to Sub Digest are processed as consecutive commands, with the output of one command being fed as the input to the next.
+If you run e.g. `--sort-field start ASC --sort-field style ASC`, it will first sort by start time and then by
+
+By default Sub Digests works on the events section of the file, which contains the dialogue lines.
+You can use the `--use-styles` argument to switch to the styles section instead, so that any following arguments will modify the styles section.
+Use `--use-events` to switch back.
+
+### Selections
+
+By default, all lines are treated as selected, meaning that most commands such as `--sort-field` will operate on all lines (in the current section).
+If you wish to only operate on a subset of lines, use the `--selection-*` commands.
+E.g. `--selection-set style "^Default"` will set the selection to all lines whose style begins with "Default", and `--selection-intersect TYPE "Comment"` will intersect the current selection with all commented lines.
+To reset the selection, and thus select all lines again, use `--selection-clear`.
+Operations that support selections include `--sort-*`, `--modify-*`, `--keep-selected` and `--remove-selected`.
+
+### Expressions
+
+Some commands have alternative versions that take arbitrary Python expressions.
+In these expressions, the current line will be available as `_`.
+There are also a number of functions available to make it easier to modify the start and end times of a line, which are represented as `datetime.timedelta` objects, namely: `mins(x)`, `secs(x)` and `millis(x)`, which take a float and return a corresponding `timedelta` object.
+For instance, in order to add a lead-in of 100 ms to all lines, you can use `--modify-expr start _.start - secs(0.1)`.
+
+### Use from Python (interactive session)
+
+Sub Digest also provides a `subdigest.py` module which can be imported from Python.
+This allows for the possibility of interactively editing an ASS file from the Python REPL.
+
+```
+$ python
+>>> import ass
+>>> import subdigest
+>>> with open('script.ass') as f:
+...   subs = subdigest.Subtitles(ass.parse(f))
+...
+>>> subs.
+subs.get_field(                 subs.move_selection(            subs.selection                  subs.selection_intersect_expr(  subs.sort_expr(
+subs.keep_selected(             subs.remove_all_tags(           subs.selection_add(             subs.selection_set(             subs.sort_field(
+subs.merge_file(                subs.remove_selected(           subs.selection_add_expr(        subs.selection_set_expr(        subs.sub_file
+subs.modify_expr(               subs.remove_unused_styles(      subs.selection_clear(           subs.selection_subtract(        subs.use_events(
+subs.modify_field(              subs.section                    subs.selection_intersect(       subs.selection_subtract_expr(   subs.use_styles(
+>>> subs.selection_set("style", "^Default")
+<subdigest.Subtitles object at 0x7f9ba4d49e48>
+>>> subs.modify_field("text", "-chan", "")
+<subdigest.Subtitles object at 0x7f9ba4d49e48>
+>>> with open('output.ass', 'w') as f:
+...   subs.dump_file(f)
+```
+
+All `ass.document.Document` properties and methods are available directly from the `subdigest.Subtitles` object, including the `events` and `styles` objects.
+
+Note that at the current point in time most operations are perform in-place, meaning that there is no way to undo a change.
+
+### Examples
+
+Get the text of dialogue lines as plain text, with override tags and comments removed:
+```
+subdigest -i script.ass --remove-all-tags --get-field text
+```
+
+Change all instances of `-chan` and `-san` to `{*-chan}` and `{*-san}`, respectively, for use with [Daiz's Autoswapper](https://github.com/Daiz/AegisubMacros/#autoswapperlua---autoswapper):
+```
+subdigest -i script.ass --in-place --modify-field text "(-(chan|san))" "{*\1}"
+```
+
+Extract only the dialogue lines from a muxed script:
+```
+subdigest -i script.ass -o dialogue.ass --selection-set style "Default|Alt" --keep-selected --remove-unused-styles --sort-field start ASC
+```
+
+Use together with [Prass](https://github.com/tp7/Prass/):
+```
+subdigest -i script.ass --selection-set style "Default" --keep-selected | prass tpp - --lead-in 100 --lead-out 200 | subdigest --sort-field start ASC
+```
+
+Merge files:
+```
+subdigest -i dialogue.ass --merge-file typesetting.ass --merge-file OP.ass
+```
+
+Remove all lines within the first 5 minutes:
+```
+subdigest -i dialogue.ass --set-selection-expr "_.start < mins(5)" --remove-selected
+```

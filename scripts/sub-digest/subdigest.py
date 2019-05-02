@@ -245,7 +245,7 @@ class Subtitles:
         return self
 
     @filter
-    def move_selection(self, position: {"TOP", "BOTTOM"}) -> Subtitles:
+    def move_selected(self, position: {"TOP", "BOTTOM"}) -> Subtitles:
         """Move all selected lines to the top or bottom of the current section."""
         selection = self._get_selection()
         nonselection = self._get_nonselection()

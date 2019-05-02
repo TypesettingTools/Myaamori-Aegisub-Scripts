@@ -76,7 +76,7 @@ subdigest -i script.ass --selection-set style "Default|Alt" --keep-selected --re
 ```
 
 Sub Digest is a utility for quick processing of ASS files.
-At the basic level it can do e.g. sorting, simple replacement, and modification of values using Python expressions.
+At the basic level it can do e.g. sorting, simple replacement with regex, and modification of values using Python expressions.
 However, most of its power comes from the use of *selections*, which make it possible to operate on just a subset of the file.
 
 Sub Digest makes use of [python-ass](https://github.com/chireiden/python-ass), and inherits many of its conventions, including field names.
@@ -145,7 +145,7 @@ subs.modify_field(              subs.section                    subs.selection_i
 
 All `ass.document.Document` properties and methods are available directly from the `subdigest.Subtitles` object, including the `events` and `styles` objects.
 
-Note that at the current point in time most operations are perform in-place, meaning that there is no way to undo a change.
+Note that at the current point in time most operations are performed in-place, meaning that there is no way to undo a change.
 
 ### Examples
 
@@ -154,9 +154,9 @@ Get the text of dialogue lines as plain text, with override tags and comments re
 subdigest -i script.ass --remove-all-tags --get-field text
 ```
 
-Change all instances of `-chan` and `-san` to `{*-chan}` and `{*-san}`, respectively, for use with [Daiz's Autoswapper](https://github.com/Daiz/AegisubMacros/#autoswapperlua---autoswapper):
+Change all instances of `-chan` and `-san` to `{**-chan}` and `{**-san}`, respectively, for use with [Daiz's Autoswapper](https://github.com/Daiz/AegisubMacros/#autoswapperlua---autoswapper):
 ```
-subdigest -i script.ass --in-place --modify-field text "(-(chan|san))" "{*\1}"
+subdigest -i script.ass --in-place --modify-field text "(-(chan|san))" "{**\1}"
 ```
 
 Extract only the dialogue lines from a muxed script:

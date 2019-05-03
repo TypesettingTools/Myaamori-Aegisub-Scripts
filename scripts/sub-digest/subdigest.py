@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 import argparse
+import contextlib
 import datetime
 import inspect
 import io
@@ -348,7 +349,8 @@ class Subtitles:
 
     def __str__(self):
         sio = io.StringIO()
-        self.sub_file.dump_file(sio)
+        with contextlib.suppress(UserWarning):
+            self.sub_file.dump_file(sio)
         return sio.getvalue()
 
     def __getattr__(self, name):
@@ -393,9 +395,9 @@ def main():
         args.output = args.input
 
     if args.output is None or args.output == '-':
-        sys.stdout.write(str(sub_obj))
+        sys.stdout.buffer.write(str(sub_obj).encode('utf-8-sig'))
     else:
-        with open(args.output, 'w') as f:
+        with open(args.output, 'w', encoding="utf-8-sig") as f:
             f.write(str(sub_obj))
 
 if __name__ == '__main__':

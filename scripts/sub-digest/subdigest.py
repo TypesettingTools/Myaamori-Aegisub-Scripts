@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 import argparse
+import codecs
 import datetime
 import inspect
 import io
@@ -381,7 +382,7 @@ def main():
     args = parser.parse_args()
 
     if args.input is None or args.input == '-':
-        sub_obj = ass.parse(sys.stdin)
+        sub_obj = ass.parse(codecs.getreader('utf-8-sig')(sys.stdin.buffer))
     else:
         with open(args.input, 'r', encoding='utf-8-sig') as f:
             sub_obj = ass.parse(f)

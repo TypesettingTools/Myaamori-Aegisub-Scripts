@@ -1,12 +1,12 @@
 
 from __future__ import annotations
 import argparse
-import contextlib
 import datetime
 import inspect
 import io
 import re
 import sys
+import warnings
 
 import ass
 
@@ -349,7 +349,8 @@ class Subtitles:
 
     def __str__(self):
         sio = io.StringIO()
-        with contextlib.suppress(UserWarning):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
             self.sub_file.dump_file(sio)
         return sio.getvalue()
 
@@ -382,7 +383,7 @@ def main():
     if args.input is None or args.input == '-':
         sub_obj = ass.parse(sys.stdin)
     else:
-        with open(args.input, 'r') as f:
+        with open(args.input, 'r', encoding='utf-8-sig') as f:
             sub_obj = ass.parse(f)
 
     sub_obj = Subtitles(sub_obj)

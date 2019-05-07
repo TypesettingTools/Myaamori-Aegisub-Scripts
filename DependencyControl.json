@@ -18,15 +18,15 @@
       "description": "Provides advanced script merging, mainly for use during QC.",
       "channels": {
         "release": {
-          "version": "0.0.6",
-          "released": "2019-04-23",
+          "version": "0.0.7",
+          "released": "2019-05-07",
           "default": true,
           "files": [
             {
               "name": ".moon",
               "url": "@{fileBaseUrl}@{fileName}",
-              "sha1": "B2057D48ECC74648DBF7B749E9A11F5E645075E2"
-            },
+              "sha1": "23A06FE58BEAD292BD65CC5B63D6DEF4EAE45F94"
+            }
           ],
           "requiredModules": [
             {
@@ -35,6 +35,12 @@
               "url": "https://github.com/TypesettingTools/ASSFoundation",
               "version": "0.6.0",
               "feed": "@{feed:Functional}"
+            },
+            {
+              "moduleName": "myaa.ASSParser",
+              "name": "ASS Parser",
+              "url": "https://github.com/TypesettingTools/Myaamori-Aegisub-Scripts",
+              "version": "0.0.1"
             },
             {
               "moduleName": "myaa.pl",
@@ -66,11 +72,45 @@
         ],
         "0.0.6": [
           "Fix an issue where import paths generated on Windows weren't *nix compatible"
+        ],
+        "0.0.7": [
+          "Split the parsing functions of Merge Scripts into separate ASSParser module",
+          "Generate release candidate now saves to a separate file rather than editing in-place"
         ]
       }
     }
   },
   "modules": {
+    "myaa.ASSParser": {
+      "url": "https://github.com/TypesettingTools/Myaamori-Aegisub-Scripts",
+      "author": "Myaamori",
+      "name": "ASS Parser",
+      "description": "An ASS parser for Aegisub automations.",
+      "fileBaseUrl": "@{fileBaseUrl}/@{namespace}-v@{version}/modules/myaa/ASSParser",
+      "channels": {
+        "release": {
+          "version": "0.0.1",
+          "released": "2019-05-07",
+          "default": true,
+          "files": [
+            {
+              "name": ".moon",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "903E0B2F4BC9B14CB6F4CA7D1CE0AB0F50BA4D7E"
+            }
+          ],
+          "requiredModules": [
+            {
+              "moduleName": "l0.Functional",
+              "name": "(Almost) Functional Suite",
+              "url": "https://github.com/TypesettingTools/ASSFoundation",
+              "version": "0.6.0",
+              "feed": "@{feed:Functional}"
+            }
+          ]
+        }
+      }
+    },
     "myaa.pl": {
       "url": "https://github.com/TypesettingTools/Penlight",
       "author": "stevedonovan",

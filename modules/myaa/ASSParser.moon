@@ -327,8 +327,8 @@ parser.generate_events_section = (events, extradata_mapping)->
                     -- if new extradata, generate new ID and cache it
                     last_eid += 1
                     cached_id = last_eid
-                    extrakeys[key] = extrakeys[key] or {}
-                    extrakeys[key][value] = cached_id
+                    extradata_mapping[key] = extradata_mapping[key] or {}
+                    extradata_mapping[key][value] = cached_id
 
                 table.insert lineindices, cached_id
                 extradata_to_write[cached_id] = {key, value}

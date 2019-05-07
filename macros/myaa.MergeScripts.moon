@@ -231,52 +231,57 @@ prompt = (text)->
     aegisub.dialog.display({{class: "textbox", text: text, height: 20, width: 40}})
 
 generate_release = (subtitles, selected_lines, active_line)->
-    -- collect style and dialogue lines
-    styles = [line for line in *subtitles when line.class == "style"]
-    dialogue_lines = {}
+    -- collect lines per class
+    lines = {"info": {}, "style": {}, "dialogue": {}}
     files = {}
-    for i, line in ipairs subtitles
-        -- don't include comments or empty lines
-        if line.class == "dialogue" and not line.comment and #line.text > 0
-            table.insert dialogue_lines, {i, line}
-
+    for line in *subtitles
         -- find the source files for each namespace for error reporting
         data = get_data line
         if data
             files[data.prefix] = line.text
+            continue
+
+        -- don't include comments or empty lines
+        if line.class == "dialogue" and (line.comment or #line.text == 0)
+            continue
+
+        if lines[line.class]
+            table.insert lines[line.class], line
 
     -- find what styles are actually used by dialogue lines
-    used_styles = {line.style, true for {i, line} in *dialogue_lines}
+    used_styles = {line.style, true for line in *lines.dialogue}
 
     -- remove namespace from styles and detect clashing styles
-    lines = {}
+    filtered_styles = {}
     added_styles = {}
     clashing_styles = false
-    for style in *styles
-        {prefix, sname} = F.string.split style.name, "$", 1, true, 1
-        if used_styles[style.name]
-            if sname
-                style.source_file = files[tonumber prefix]
-                style.name = sname
-            else
-                style.source_file = "[current file]"
+    for style in *lines.style
+        if not used_styles[style.name]
+            continue
 
-            added_styles[style.name] = added_styles[style.name] or {}
-            table.insert added_styles[style.name], style
-            if #added_styles[style.name] >= 2 and
-                    parser.line_to_raw(added_styles[style.name][1]) != parser.line_to_raw(style)
-                clashing_styles = true
-                continue
+        {prefix, orig_name} = F.string.split style.name, "$", 1, true, 1
+        if orig_name
+            style.source_file = files[tonumber prefix]
+            style.name = orig_name
+        else
+            style.source_file = "[current file]"
 
-            table.insert lines, style
+        added_styles[style.name] = added_styles[style.name] or {}
+        table.insert added_styles[style.name], style
+        if #added_styles[style.name] >= 2 and
+                parser.line_to_raw(added_styles[style.name][1]) != parser.line_to_raw(style)
+            clashing_styles = true
+            continue
+
+        table.insert filtered_styles, style
+
+    lines.style = filtered_styles
 
     -- remove namespace from dialogue lines
-    for {i, dialogue} in *dialogue_lines
-        {file, sname} = F.string.split dialogue.style, "$", 1, true, 1
-        if sname
-            dialogue.style = sname
-
-        table.insert lines, dialogue
+    for event in *lines.dialogue
+        {file, orig_style} = F.string.split event.style, "$", 1, true, 1
+        if orig_style
+            event.style = orig_style
 
     if clashing_styles
         text = "Found clashing styles:\n\n"
@@ -288,7 +293,7 @@ generate_release = (subtitles, selected_lines, active_line)->
             first_style = parser.line_to_raw styles[1]
             text ..= "Styles with the name '#{style_name}' appear in multiple files " ..
                 "with different definitions:\n"
-            for i, style in ipairs styles
+            for style in *styles
                 text ..= "- " .. style.source_file
                 text ..= " (clashes; ignored)" if parser.line_to_raw(style) != first_style
                 text ..= "\n"
@@ -300,12 +305,21 @@ generate_release = (subtitles, selected_lines, active_line)->
         if not prompt text
             return
 
-    all_lines = for i, line in ipairs subtitles
-        if line.class == "dialogue" or line.class == "style" then i else continue
-    subtitles.delete all_lines
+    out_file = parser.generate_file lines.info, nil, lines.style, lines.dialogue
 
-    for line in *lines
-        subtitles[0] = line
+    script_path = aegisub.decode_path("?script") .. "/"
+    script_path = "" if script_path == "?script/"
+    out_file_name = aegisub.dialog.save "Save release candidate", "", script_path, "*.ass"
+    if not out_file_name
+        return
+
+    file, error = io.open(out_file_name, 'w')
+    if not file
+        aegisub.log 0, "FATAL: Could not open #{out_file_name} for writing: #{error}\n"
+        return
+
+    file\write out_file
+    file\close!
 
 get_imported_lines = (subtitles)->
     imports = {}

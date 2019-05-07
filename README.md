@@ -178,3 +178,304 @@ Remove all lines within the first 5 minutes:
 ```
 subdigest -i dialogue.ass --set-selection-expr "_.start < mins(5)" --remove-selected
 ```
+
+## ASSParser
+
+### Overview
+
+ASSParser is a module containing facilities for parsing ASS files and related utilities written in MoonScript for use with Aegisub automations.
+
+### Usage
+
+```moon
+parser = require 'myaa.ASSParser'
+file = open('my script.ass')
+parsed_file = parser.parse_file(file)
+file\close!
+
+for event in *parsed_file.events
+    aegisub.log "{event.text}\n"
+```
+
+### Documentation
+
+#### parse_file(file)
+
+Parses an ASS file.
+
+Arguments:
+
+* **file**: A file handle to the ASS file to parse
+
+Returns: An `ASSFile` object representing the parsed file, containing the following fields:
+
+* **styles**: A list of style lines.
+* **events**: A list of event (dialogue) lines.
+* **script_info**: A list of info lines representing the Script Info section.
+* **script_info_mapping**: A table mapping Script Info keys to their corresponding values.
+* **aegisub_garbage**: A list of info lines representing the Aegisub Project Garbage section.
+* **aegisub_garbage_mapping**: A table mapping Aegisub Project Garbage keys to their corresponding values.
+* **extradata**: A table mapping numerical extradata IDs to data lines (see below).
+* **extradata_mapping**: A table mapping keys and values to their original ID.
+`extradata_mapping[key][value]` is the numerical ID of the extradata line with key `key` and value `value`.
+
+The style, dialogue and info lines follow the format described in [the Aegisub documentation](http://docs.aegisub.org/3.2/Automation/Lua/Subtitle_file_interface/#line-data-tables).
+Data lines are similar to info lines, except they additionally have an `id` field containing the original numerical ID of the line in the source file.
+
+Example:
+
+```moon
+assfile = parser.parse_file(file)
+aegisub.log "The script resolution is #{assfile.script_info_mapping.PlayResX}x#{assfile.script_info_mapping.PlayResY}\n"
+```
+
+#### raw_to_line(raw, extradata=nil, format=nil)
+
+Parses a raw line as it appears in the ASS file.
+
+Arguments:
+
+* **raw**: A text representation of the line.
+* **extradata**: A mapping from extradata IDs to extradata lines. Corresponds to `ASSFile.extradata`.
+If provided, the line will be automatically populated with extradata if extradata IDs are present on the line;
+otherwise, the extradata IDs will be silently removed.
+* **format**: An ordered list of field names corresponding to the `Format` line at the start of the styles and events sections.
+You probably never need to use this.
+
+Returns: A line object corresponding to the given text.
+
+Example:
+
+```moon
+>>> json.encode parser.raw_to_line "Dialogue: 5,0:00:04.20,0:00:05.48,Default,,0,0,0,,{\\i1}Starlight."
+{"layer":5,"extra":{},"margin_t":0,"margin_l":0,"style":"Default","actor":"","start_time":4200,"end_time":5480,"section":"[Events]","class":"dialogue","margin_r":0,"comment":false,"effect":"","text":"{\\i1}Starlight."}
+```
+
+#### line_to_raw(line)
+
+Converts a line object into a text representation corresponding to how it would appear in an ASS file.
+
+Arguments:
+
+* **line**: The line object.
+
+Returns: A raw text representation of the line.
+
+Example:
+
+```moon
+>>> parser.line_to_raw {"layer":5,"extra":{},"margin_t":0,"margin_l":0,"style":"Default","actor":"","start_time":4200,"end_time":5480,"section":"[Events]","class":"dialogue","margin_r":0,"comment":false,"effect":"","text":"{\\i1}Starlight."}
+Dialogue: 5,0:00:04.20,0:00:05.48,Default,,0,0,0,,{\i1}Starlight.
+```
+
+#### create_dialogue_line(fields)
+
+Create a new dialogue line with the given values.
+Non-specified values will be populated with default values.
+
+Arguments:
+
+* **fields**: A partial line object, i.e. a map with the fields you wish to specify and their values.
+
+Returns: A new dialogue line object.
+
+Example:
+
+```moon
+>>> parser.line_to_raw parser.create_dialogue_line {text: "Hello", style: "Alt"}
+Dialogue: 0,0:00:00.00,0:00:00.00,Alt,,0,0,0,,Hello
+```
+
+#### create_style_line(fields)
+
+Like `create_dialogue_line`, but for styles.
+
+Arguments:
+
+* **fields**: A map containing predefined style properties.
+
+Returns: A new style line object.
+
+#### inline_string_encode(input)
+
+Encodes a string using a simple scheme reminiscent of URL encoding.
+Used to encode extradata values.
+
+Arguments:
+
+* **input**: The string to encode.
+
+Returns: An encoded string.
+
+Example:
+
+```moon
+>>> parser.inline_string_encode '{"style":"Alt","text":"Hello"}'
+{"style"#3A"Alt"#2C"text"#3A"Hello"}
+```
+
+#### inline_string_decode(input)
+
+Decodes a string encoded using `inline_string_encode`.
+
+Arguments:
+
+* **input**: The string to decode.
+
+Returns: A decoded string.
+
+Example:
+
+```moon
+>>> parser.inline_string_decode '{"style"#3A"Alt"#2C"text"#3A"Hello"}'
+{"style":"Alt","text":"Hello"}
+```
+
+#### uuencode(input)
+
+Implements UUEncode as defined in the [ASS specification](http://moodub.free.fr/video/ass-specs.doc).
+Used to encode extradata values.
+Based on [the corresponding Aegisub implementation](https://github.com/TypesettingTools/Aegisub/blob/26ccf0b8e5374973b3a5edfe2bd958a1a2040da1/libaegisub/ass/uuencode.cpp#L29).
+
+Arguments:
+
+* **input**: The string to encode.
+
+Returns: A UUEncoded string.
+
+Example:
+
+```moon
+>>> parser.uuencode "hello"
+;'6M<']
+```
+
+#### uudecode(input)
+
+Decodes a UUEncoded string.
+
+Arguments:
+
+* **input**: The string to decode.
+
+Returns: A decoded string.
+
+Example:
+
+```moon
+>>> parser.uudecode ";'6M<']"
+hello
+```
+
+#### decode_extradata_value(value)
+
+Decodes an extradata value based on the prefix (`e` for `inline_string_decode`, `u` for `uudecode`).
+
+Arguments:
+
+* **value**: The extradata value to decode.
+
+Returns: A decoded string.
+
+Example:
+
+```moon
+>>> parser.decode_extradata_value "u;'6M<']"
+hello
+```
+
+#### generate_styles_section(styles)
+
+Generates a V4+ Styles section from the given style lines.
+
+Arguments:
+
+* **styles**: A list of style objects.
+
+Returns: The corresponding V4+ Styles section as a string.
+
+Example:
+
+```moon
+>>> parse.generate_styles_section style_list
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Myriad Pro Light,79,&H00FFFFFF,&H000000FF,&H00613C38,&HC0171010,0,0,0,0,100,100,0,0,1,3.8,2.4,2,144,144,60,1
+Style: Alt,Myriad Pro Light,79,&H00FFFFFF,&H000000FF,&H007B437F,&H96171010,0,0,0,0,100,100,0,0,1,3.8,2.4,2,144,144,50,1
+```
+
+#### generate_events_section(events, extradata_mapping=nil)
+
+Generates an Events section from the given dialogue lines.
+If `extradata_mapping` is given, also generates an extradata section.
+
+Arguments:
+
+* **events**: A list of dialogue lines.
+* **extradata_mapping**: A map from extradata key and value to numerical extradata ID, of the same format as `ASSFile.extradata_mapping`.
+May be `{}`.
+Note that `extradata_mapping` will be populated with new IDs for unseen extradata key/value pairs.
+
+Returns:
+
+* The corresponding Events section as a string.
+* The extradata section as a string if `extradata_mapping` was supplied and the extradata section is not empty, otherwise `nil`.
+
+Example:
+
+```moon
+>>> extradata_mapping = {}
+>>> events, extradata = parser.generate_events_section dialogue_lines, extradata_mapping
+>>> events
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:23:13.78,0:23:16.16,Default,,0,0,0,,{=1}{\pos(562.423,712.71)\frz-7.456}T
+Dialogue: 0,0:23:13.78,0:23:16.16,Default,,0,0,0,,{=2}{\pos(572.74,714.338)\frz-9.882}e
+Dialogue: 0,0:23:13.78,0:23:16.16,Default,,0,0,0,,{=2}{\pos(582.064,715.864)\frz-9.882}x
+Dialogue: 0,0:23:13.78,0:23:16.16,Default,,0,0,0,,{=2}{\pos(588.91,717.113)\frz-11.157}t
+>>> extradata
+[Aegisub Extradata]
+Data: 1,l0.MoveAlongPath,e{"orgLine"#3A"{\\clip(m 557 712 b 715 731 921 868 1200 354)}Text"#2C"settings"#3A{"relPos"#3Afalse#2C"aniPos"#3Atrue#2C"aniFrz"#3Atrue#2C"accel"#3A1#2C"cfrMode"#3Atrue#2C"reverseLine"#3Afalse#2C"flipFrz"#3Afalse}#2C"id"#3A"d5531114-a9ce-4bdd-b48e-a3f536cc954a"}
+Data: 2,l0.MoveAlongPath,e{"settings"#3A{"relPos"#3Afalse#2C"aniPos"#3Atrue#2C"aniFrz"#3Atrue#2C"accel"#3A1#2C"cfrMode"#3Atrue#2C"reverseLine"#3Afalse#2C"flipFrz"#3Afalse}#2C"id"#3A"d5531114-a9ce-4bdd-b48e-a3f536cc954a"}
+>>> json.encode extradata_mapping
+{"l0.MoveAlongPath":{"{\"orgLine\":\"{\\\\clip(m 557 712 b 715 731 921 868 1200 354)}Text\",\"settings\":{\"relPos\":false,\"aniPos\":true,\"aniFrz\":true,\"accel\":1,\"cfrMode\":true,\"reverseLine\":false,\"flipFrz\":false},\"id\":\"d5531114-a9ce-4bdd-b48e-a3f536cc954a\"}":1,"{\"settings\":{\"relPos\":false,\"aniPos\":true,\"aniFrz\":true,\"accel\":1,\"cfrMode\":true,\"reverseLine\":false,\"flipFrz\":false},\"id\":\"d5531114-a9ce-4bdd-b48e-a3f536cc954a\"}":2}}
+```
+
+#### generate_script_info_section(lines, bom=true)
+
+Generates a Script Info section from the given info lines.
+
+Arguments:
+
+* **lines**: A list of info lines.
+* **bom**: If true, prepend the section with the UTF-8 byte order mark.
+Aegisub expects all Unicode-encoded ASS files to start with a BOM;
+don't set to false unless you know what you're doing.
+
+Returns: The corresponding Script Info section as a string.
+
+#### generate_aegisub_garbage_section(lines)
+
+Generates an Aegisub Project Garbage section from the given info lines.
+
+Arguments:
+
+* **lines**: A list of info lines.
+
+Returns: The corresponding Aegisub Project Garbage section as a string.
+
+#### generate_file(script_info=nil, aegisub_garbage=nil, styles=nil, events=nil, extradata_mapping=nil)
+
+Generates an ASS file from the given lines in one go.
+If any argument is `nil`, the corresponding section will not be included.
+
+Arguments:
+
+* **script_info**: A list of info lines passed to `generate_script_info_section`.
+* **aegisub_garbage**: A list of info lines passed to `generate_aegisub_garbage_section`.
+* **styles**: A list of style lines passed to `generate_styles_section`.
+* **events**: A list of dialogue lines passed to `generate_events_section`.
+* **extradata_mapping**: A mapping from extradata key/value pairs to IDs, passed to `generate_events_section`.
+
+Returns: A string containing the corresponding sections.
+Will start with the UTF-8 BOM.

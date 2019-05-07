@@ -21,12 +21,13 @@ import lshift, rshift, band, bor from bit
 
 parser = {}
 
-parser.STYLE_FORMAT_STRING = "Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, " ..
+STYLE_FORMAT_STRING = "Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, " ..
         "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, " ..
         "Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, " ..
         "MarginV, Encoding"
-parser.EVENT_FORMAT_STRING = "Layer, Start, End, Style, Name, MarginL, MarginR, " ..
+EVENT_FORMAT_STRING = "Layer, Start, End, Style, Name, MarginL, MarginR, " ..
         "MarginV, Effect, Text"
+DATA_FORMAT_STRING = "Id, Key, Value"
 
 DIALOGUE_DEFAULTS =
     actor: "", class: "dialogue", comment: false, effect: "",
@@ -57,8 +58,33 @@ parser.create_dialogue_line = (fields)->
 
 parser.create_style_line = (fields)-> create_line_from STYLE_DEFAULTS, fields
 
-parser.raw_to_line = (line_type, raw, format, extradata)->
-    elements = F.string.split raw, ",", 1, true, #format-1
+parser.decode_extradata_value = (value)->
+    enc, data = value\match "^([eu])(.*)$"
+
+    if enc == 'e'
+        return parser.inline_string_decode data
+    else
+        return parser.uudecode data
+
+parse_format_line = (format_string)-> [match for match in format_string\gmatch "([^, ]+)"]
+
+parser.raw_to_line = (raw, extradata=nil, format=nil)->
+    line_type, value = raw\match "^([^:]+):%s*(.*)$"
+    if not value
+        return nil
+
+    default_format = {Dialogue: EVENT_FORMAT_STRING,
+                      Comment: EVENT_FORMAT_STRING,
+                      Style: STYLE_FORMAT_STRING,
+                      Data: DATA_FORMAT_STRING}
+
+    if line_type == "Format"
+        return {class: "format", format: parse_format_line value}
+    elseif not default_format[line_type]
+        return {class: "info", key: line_type, value: value}
+
+    format = format or parse_format_line default_format[line_type]
+    elements = F.string.split value, ",", 1, true, #format - 1
     return nil if #elements != #format
 
     fields = {format[i], elements[i] for i=1,#elements}
@@ -76,11 +102,16 @@ parser.raw_to_line = (line_type, raw, format, extradata)->
         extramatch = re.match line.text, "^\\{((?:=\\d+)+)\\}(.*)$"
         if extramatch
             line.text = extramatch[3].str
-            for key in extramatch[2].str\gmatch "=(%d+)"
-                key = tonumber key
-                if extradata[key]
-                    {field, value} = extradata[key]
-                    line.extra[field] = value
+            if extradata
+                for id in extramatch[2].str\gmatch "=(%d+)"
+                    id = tonumber id
+                    if extradata[id]
+                        eline = extradata[id]
+                        line.extra[eline.key] = eline.value
+            else
+                aegisub.log 2,
+                    "WARNING: Found extradata ID, but no extradata mapping provided: " ..
+                    "#{raw}\n"
 
         return line
     elseif line_type == "Style"
@@ -100,6 +131,9 @@ parser.raw_to_line = (line_type, raw, format, extradata)->
             encoding: tonumber(fields.Encoding)
 
         return line
+    elseif line_type == "Data"
+        return {class: "data", id: tonumber(fields.Id),
+                key: fields.Key, value: parser.decode_extradata_value fields.Value}
 
 parser.line_to_raw = (line)->
     if line.class == "dialogue"
@@ -175,8 +209,6 @@ parser.uudecode = (input)->
 
     return table.concat [string.char i for i in *ret]
 
-parse_format_line = (format_string)-> [match for match in format_string\gmatch "([^, ]+)"]
-
 class ASSFile
     new: (file)=>
         @sections = {}
@@ -195,12 +227,15 @@ class ASSFile
         @read_sections file
 
         @parse_extradata!
-        @parse_script_info!
-        @parse_aegisub_garbage!
-        @styles = @parse_section "V4+ Styles", parser.STYLE_FORMAT_STRING, {"Style": true}
-        @events = @parse_section "Events", parser.EVENT_FORMAT_STRING,
-            {"Dialogue": true, "Comment": true}
+        @script_info = @parse_section "Script Info", {"info": true}
+        @aegisub_garbage = @parse_section "Aegisub Project Garbage", {"info": true}
+        @styles = @parse_section "V4+ Styles", {"style": true}
+        @events = @parse_section "Events", {"dialogue": true}
 
+        for info in *@script_info
+            @script_info_mapping[info.key] = info.value
+        for garbage in *@aegisub_garbage
+            @aegisub_garbage_mapping[garbage.key] = garbage.value
 
     read_sections: (file)=>
         current_section = nil
@@ -219,62 +254,36 @@ class ASSFile
                 @sections[current_section] = {}
                 continue
 
-            key, value = row\match "^([^:]+):%s*(.*)$"
-            if key and value
-                table.insert @sections[current_section], {key, value}
-                continue
-
-            aegisub.log 2, "WARNING: Unexpected line: #{row}\n"
+            table.insert @sections[current_section], row
 
     parse_extradata: =>
         if @sections["Aegisub Extradata"]
-            for {key, value} in *@sections["Aegisub Extradata"]
-                if key != "Data"
-                    aegisub.log 2, "WARNING: Unrecognized extradata key: #{key}\n"
+            for row in *@sections["Aegisub Extradata"]
+                line = parser.raw_to_line row
+                if not line or line.class != "data"
+                    aegisub.log 2, "WARNING: Malformed data line: #{row}\n"
                     continue
 
-                num, dkey, enc, data = value\match "^(%d+),([^,]*),([eu])(.*)$"
-                if not num
-                    aegisub.log 2, "WARNING: Malformed extradata line: #{value}\n"
-                    continue
+                @extradata[line.id] = line
+                @extradata_mapping[line.key] = @extradata_mapping[line.key] or {}
+                @extradata_mapping[line.key][line.value] = line.id
 
-                if enc == 'e'
-                    data = parser.inline_string_decode data
-                else
-                    data = parser.uudecode data
-
-                num = tonumber num
-                @extradata[num] = {dkey, data}
-                @extradata_mapping[dkey] = @extradata_mapping[dkey] or {}
-                @extradata_mapping[dkey][data] = num
-
-    parse_script_info: =>
-        if @sections["Script Info"]
-            @script_info_mapping = {key, value for {key, value} in *@sections["Script Info"]}
-            @script_info = [{:key, :value} for {key, value} in *@sections["Script Info"]]
-
-    parse_aegisub_garbage: =>
-        if @sections["Aegisub Project Garbage"]
-            sec = @sections["Aegisub Project Garbage"]
-            @aegisub_garbage_mapping = {key, value for {key, value} in *sec}
-            @aegisub_garbage = [{:key, :value} for {key, value} in *sec]
-
-    parse_section: (section, default_format, expected_events)=>
+    parse_section: (section, expected_classes)=>
         lines = {}
         return lines if not @sections[section]
 
-        format = default_format and parse_format_line default_format
-        for {line_type, line} in *@sections[section]
-            if line_type == "Format"
-                format = parse_format_line line
-            elseif expected_events[line_type]
-                parsed_line = parser.raw_to_line line_type, line, format, @extradata
-                if parsed_line
-                    table.insert lines, parsed_line
-                else
-                    aegisub.log 2, "WARNING: Malformed line of type #{line_type}: #{line}\n"
+        format = nil
+        for row in *@sections[section]
+            line = parser.raw_to_line row, @extradata, format
+
+            if not line
+                aegisub.log 2, "WARNING: Malformed line: #{line}\n"
+            elseif line.class == "format"
+                format = line.format
+            elseif expected_classes[line.class]
+                table.insert lines, line
             else
-                aegisub.log 2, "WARNING: Unexpected type #{line_type} in section #{section}\n"
+                aegisub.log 2, "WARNING: Unexpected type #{line.class} in section #{section}\n"
 
         return lines
 
@@ -284,7 +293,7 @@ parser.parse_file = (file)->
 parser.generate_styles_section = (styles)->
     out_text = {}
     table.insert out_text, "[V4+ Styles]\n"
-    table.insert out_text, "Format: #{parser.STYLE_FORMAT_STRING}\n"
+    table.insert out_text, "Format: #{STYLE_FORMAT_STRING}\n"
     for line in *styles
         table.insert out_text, parser.line_to_raw(line) .. "\n"
 
@@ -294,7 +303,7 @@ parser.generate_events_section = (events, extradata_mapping)->
     out_events = {}
     out_extradata = {}
     table.insert out_events, "[Events]\n"
-    table.insert out_events, "Format: #{parser.EVENT_FORMAT_STRING}\n"
+    table.insert out_events, "Format: #{EVENT_FORMAT_STRING}\n"
 
     -- find the largest extradata index seen so far
     last_index = 0

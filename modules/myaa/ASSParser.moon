@@ -150,6 +150,8 @@ parser.line_to_raw = (line)->
             "#{line.scale_x},#{line.scale_y},#{line.spacing},#{line.angle}," ..
             "#{line.borderstyle},#{line.outline},#{line.shadow},#{line.align}," ..
             "#{line.margin_l},#{line.margin_r},#{line.margin_t},#{line.encoding}"
+    elseif line.class == "info"
+        "#{line.key}: #{line.value}"
 
 parser.inline_string_encode = (input)->
     output = {}
@@ -305,12 +307,12 @@ parser.generate_events_section = (events, extradata_mapping)->
     table.insert out_events, "[Events]\n"
     table.insert out_events, "Format: #{EVENT_FORMAT_STRING}\n"
 
-    -- find the largest extradata index seen so far
-    last_index = 0
+    -- find the largest extradata ID seen so far
+    last_eid = 0
     if extradata_mapping
         for key, v in pairs extradata_mapping
-            for value, index in pairs v
-                last_index = math.max last_index, index
+            for value, eid in pairs v
+                last_eid = math.max last_eid, eid
 
     extradata_to_write = {}
 
@@ -320,16 +322,16 @@ parser.generate_events_section = (events, extradata_mapping)->
             lineindices = {}
             for key, value in pairs line.extra
                 -- look for data in the original file's extradata
-                extra_index = extradata_mapping[key] and extradata_mapping[key][value]
-                if not extra_index
-                    -- if new extradata, generate new index and cache it
-                    last_index += 1
-                    extra_index = last_index
+                cached_id = extradata_mapping[key] and extradata_mapping[key][value]
+                if not cached_id
+                    -- if new extradata, generate new ID and cache it
+                    last_eid += 1
+                    cached_id = last_eid
                     extrakeys[key] = extrakeys[key] or {}
-                    extrakeys[key][value] = extra_index
+                    extrakeys[key][value] = cached_id
 
-                table.insert lineindices, extra_index
-                extradata_to_write[extra_index] = {key, value}
+                table.insert lineindices, cached_id
+                extradata_to_write[cached_id] = {key, value}
 
             -- add indices to line text (e.g. {=32=33}Text)
             if #lineindices > 0
@@ -358,6 +360,37 @@ parser.generate_events_section = (events, extradata_mapping)->
     else
         return table.concat out_events
 
+parser.generate_script_info_section = (lines, bom=true)->
+    out_text = {}
+    if bom
+        table.insert out_text, "\xEF\xBB\xBF"
+    table.insert out_text, "[Script Info]\n"
+    for line in *lines
+        table.insert out_text, parser.line_to_raw(line) .. "\n"
+    return table.concat out_text
+
+parser.generate_aegisub_garbage_section = (lines)->
+    out_text = {}
+    table.insert out_text, "[Aegisub Project Garbage]\n"
+    for line in *lines
+        table.insert out_text, parser.line_to_raw(line) .. "\n"
+    return table.concat out_text
+
+parser.generate_file = (script_info, aegisub_garbage, styles, events, extradata_mapping)->
+    sections = {}
+    if script_info
+        table.insert sections, parser.generate_script_info_section script_info
+    if aegisub_garbage
+        table.insert sections, parser.generate_aegisub_garbage_section aegisub_garbage
+    if styles
+        table.insert sections, parser.generate_styles_section styles
+    if events
+        events_section, extradata_section = parser.generate_events_section events, extradata_mapping
+        table.insert sections, events_section
+        if extradata_section
+            table.insert sections, extradata_section
+
+    return table.concat sections, "\n"
 
 parser.version = version
 return version\register parser

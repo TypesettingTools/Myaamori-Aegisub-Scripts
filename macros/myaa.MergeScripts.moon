@@ -365,9 +365,6 @@ export_changes = (subtitles, selected_lines, active_line)->
 
         imported_lines = lines[data.prefix] or {style: {}, dialogue: {}}
 
-        table.insert out_text, parser.generate_styles_section imported_lines.style
-        table.insert out_text, "\n"
-
         -- shift back timings for import-shifted lines
         if data.sync_line
             sync_diff = imp.start_time - data.sync_line
@@ -375,13 +372,8 @@ export_changes = (subtitles, selected_lines, active_line)->
                 line.start_time = math.max(line.start_time - sync_diff, 0)
                 line.end_time = math.max(line.end_time - sync_diff, 0)
 
-        events_section, extradata_section = parser.generate_events_section(
-            imported_lines.dialogue, data.extrakeys)
-
-        table.insert out_text, events_section
-        if extradata_section
-            table.insert out_text, "\n"
-            table.insert out_text, extradata_section
+        table.insert out_text, parser.generate_file nil, nil, imported_lines.style,
+            imported_lines.dialogue, data.extrakeys
 
         outputs[data.file] = table.concat out_text
 

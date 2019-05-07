@@ -64,7 +64,7 @@ Thus, in the event of a conflict it is usually best to correct the offending fil
 ### Generating a release version
 
 Since you may not want to release the script publicly with all styles prefixed and the import definitions included (not that it would affect the viewing experience in any way), Merge Scripts also provides the **Generate release candidate** option.
-This will remove the prefixes from all styles, remove unused styles, and remove all commented lines.
+This will allow you to save a new file with the prefixes from all styles, unused styles, and commented and empty lines removed.
 It will also warn about conflicting style names.
 
 ## Sub Digest

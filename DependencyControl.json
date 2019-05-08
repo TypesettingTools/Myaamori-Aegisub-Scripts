@@ -86,7 +86,7 @@
       "author": "Myaamori",
       "name": "ASS Parser",
       "description": "An ASS parser for Aegisub automations.",
-      "fileBaseUrl": "@{fileBaseUrl}/@{namespace}-v@{version}/modules/myaa/ASSParser",
+      "fileBaseUrl": "@{fileBaseUrl}/@{namespace}-v@{version}/modules/@{namespacePath}",
       "channels": {
         "release": {
           "version": "0.0.1",

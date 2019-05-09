@@ -35,7 +35,7 @@ process_imports = (subtitles, selected_lines)->
     for line in *subtitles
         data = get_data line
         if data
-            used_prefixes[data.index] = true
+            used_prefixes[data.prefix] = true
 
     imports = {}
     prefix = 0

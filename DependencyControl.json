@@ -18,14 +18,14 @@
       "description": "Provides advanced script merging, mainly for use during QC.",
       "channels": {
         "release": {
-          "version": "0.0.7",
+          "version": "0.0.8",
           "released": "2019-05-07",
           "default": true,
           "files": [
             {
               "name": ".moon",
               "url": "@{fileBaseUrl}@{fileName}",
-              "sha1": "23A06FE58BEAD292BD65CC5B63D6DEF4EAE45F94"
+              "sha1": "E48CE1F4E0AFF18D1527D49E0C896D34D4AE86C0"
             }
           ],
           "requiredModules": [
@@ -76,6 +76,10 @@
         "0.0.7": [
           "Split the parsing functions of Merge Scripts into separate ASSParser module",
           "Generate release candidate now saves to a separate file rather than editing in-place"
+        ],
+        "0.0.8": [
+          "Add GUI for easier selective importing and unimporting",
+          "Fix error when importing files while other files have already been imported"
         ]
       }
     }

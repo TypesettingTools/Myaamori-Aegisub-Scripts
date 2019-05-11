@@ -38,6 +38,12 @@ Once files have been imported, they can be unimported to get back the original f
 This will delete all lines that belong to imported files.
 Much like with importing, you can remove files selectively using **Remove selected external file(s)**, which will only remove the file corresponding to the currently selected files (you may select either the import definition or any line from the file you wish to remove).
 
+![import gui](https://raw.githubusercontent.com/TypesettingTools/Myaamori-Aegisub-Scripts/master/assets/ms_importgui.png)
+
+In order to make selective importing and unimporting easier, there's also a GUI available through the **Select files to import or unimport** option.
+It will detect all defined imports and ask which of the files you wish to import.
+If you deselect an already imported file, it will be unimported.
+
 ### Exporting changes
 
 The **Export changes** option allows you to export any changes you've made to the lines to their original files.
@@ -193,12 +199,12 @@ ASSParser is a module containing facilities for parsing ASS files and related ut
 
 ```moon
 parser = require 'myaa.ASSParser'
-file = open('my script.ass')
-parsed_file = parser.parse_file(file)
+file = open 'my script.ass'
+parsed_file = parser.parse_file file
 file\close!
 
 for event in *parsed_file.events
-    aegisub.log "{event.text}\n"
+    aegisub.log "#{event.text}\n"
 ```
 
 ### Documentation

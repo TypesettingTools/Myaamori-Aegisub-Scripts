@@ -173,16 +173,17 @@ add_imports = (subtitles, imports)->
 merge = (subtitles, selected_lines)->
     imports = process_imports subtitles, selected_lines
     if not imports
-        return
+        return false
 
     -- don't set script info if no imports found
     if #imports == 0
-        return
+        return true
 
     if not find_conflicting_script_info subtitles, imports
-        return
+        return false
 
     add_imports subtitles, imports
+    return true
 
 
 clear_merged = (subtitles, selected_lines)->
@@ -226,6 +227,64 @@ clear_merged = (subtitles, selected_lines)->
                 table.insert lines_to_delete, i
 
     subtitles.delete lines_to_delete
+
+find_import_definitions = (subtitles, predicate=->true)->
+    import_lines = {}
+    for i, line in ipairs subtitles
+        if line.class == "dialogue" and
+                (line.effect == "import" or line.effect == "import-shifted") and
+                predicate line
+            table.insert import_lines, i
+    return import_lines
+
+import_gui = (subtitles, selected_lines, active_line)->
+    dialog = {
+        {
+            class: "label", x: 0, y: 0
+            label: "Select files to import. Files not selected will be unimported if already imported."
+        }
+    }
+    y = 1
+    for i in *find_import_definitions subtitles
+        line = subtitles[i]
+        data = get_data line
+        table.insert dialog, {
+            class: "checkbox", x: 0, y: y
+            value: data != nil, label: line.text
+            name: tostring(i)
+        }
+        y += 1
+
+    button, result = aegisub.dialog.display dialog
+    if not button
+        return
+
+    to_import = [tonumber i for i, val in pairs result when val]
+    table.sort to_import
+
+    -- add temporary extradata to imports to remove
+    -- to make it easier to find the lines again post merge
+    for i, val in pairs result
+        if not val
+            j = tonumber i
+            line = subtitles[j]
+            line.extra._TMP_MERGESCRIPTS = ""
+            subtitles[j] = line
+
+    merge_success = merge subtitles, to_import
+
+    -- remove temporary extradata regardless of whether merge succeeded
+    to_remove = find_import_definitions subtitles, (line)->line.extra._TMP_MERGESCRIPTS != nil
+    for i in *to_remove
+        line = subtitles[i]
+        line.extra._TMP_MERGESCRIPTS = nil
+        subtitles[i] = line
+
+    if not merge_success
+        return
+
+    clear_merged subtitles, to_remove
+
 
 prompt = (text)->
     aegisub.dialog.display({{class: "textbox", text: text, height: 20, width: 40}})
@@ -492,6 +551,12 @@ depctrl\registerMacros {
         "Remove selected external file(s)",
         "Remove the lines in the file that were imported from external files corresponding to the selected lines",
         (subtitles, selected_lines) -> clear_merged(subtitles, selected_lines)
+    },
+    {
+        "Select files to import or unimport",
+        "GUI interface for quick importing and unimporting of files",
+        import_gui,
+        script_is_saved
     },
     {
         "Generate release candidate",

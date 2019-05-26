@@ -83,6 +83,14 @@ class Subtitles:
         self.sub_file = sub_file
         self.section = "events"
         self.selection_clear()
+        self._fps = 24000 / 1001
+
+        self._helpers = {
+            "secs": lambda t: datetime.timedelta(seconds=t),
+            "mins": lambda t: datetime.timedelta(minutes=t),
+            "millis": lambda t: datetime.timedelta(milliseconds=t),
+            "frames": lambda t: datetime.timedelta(seconds=t / self._fps)
+        }
 
     def _set_section(self, lines):
         setattr(self.sub_file, self.section, lines)
@@ -95,16 +103,10 @@ class Subtitles:
                      if re.search(pattern, getattr(line, field))}
         return selection
 
-    _helpers = {
-        "secs": lambda t: datetime.timedelta(seconds=t),
-        "mins": lambda t: datetime.timedelta(minutes=t),
-        "millis": lambda t: datetime.timedelta(milliseconds=t)
-    }
-
     def _find_line_expr(self, expr):
         expr_c = compile(expr, '<string>', 'eval')
         selection = {i for i, line in enumerate(self._get_section())
-                     if eval(expr_c, None, {"_": line, **Subtitles._helpers})}
+                     if eval(expr_c, None, {"_": line, **self._helpers})}
         return selection
 
     def _get_selection(self):
@@ -288,7 +290,7 @@ class Subtitles:
         either ascending or descending."""
         def _sort(events):
             expr_c = compile(expr, '<string>', 'eval')
-            events.sort(key=lambda line: eval(expr_c, None, {"_": line, **Subtitles._helpers}),
+            events.sort(key=lambda line: eval(expr_c, None, {"_": line, **self._helpers}),
                         reverse=order == "DESC")
             return events
         self._process_selection(_sort)
@@ -316,7 +318,7 @@ class Subtitles:
             expr_c = compile(expr, '<string>', 'eval')
             for line in lines:
                 cur_val = getattr(line, field)
-                val = eval(expr_c, None, {"_": line, **Subtitles._helpers})
+                val = eval(expr_c, None, {"_": line, **self._helpers})
                 setattr(line, field, val)
         self._process_selection(_modify)
         return self
@@ -347,6 +349,12 @@ class Subtitles:
         newline separated."""
         selection = self._get_selection()
         return Text("".join(str(getattr(line, field)) + "\n" for line in selection))
+
+    @filter
+    def fps(self, fps: str) -> Subtitles:
+        """Set the fps to use for the frames() function. Default is 24000/1001."""
+        self._fps = eval(fps)
+        return self
 
     def __str__(self):
         sio = io.StringIO()

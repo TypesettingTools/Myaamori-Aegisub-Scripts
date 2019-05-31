@@ -356,6 +356,11 @@ class Subtitles:
         self._fps = eval(fps)
         return self
 
+    @filter
+    def set_script_info(self, field: str, value: str) -> Subtitles:
+        self.sub_file.fields[field] = value
+        return self
+
     def __str__(self):
         sio = io.StringIO()
         with warnings.catch_warnings():

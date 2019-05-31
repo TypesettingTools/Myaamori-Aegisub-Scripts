@@ -262,7 +262,7 @@ class Subtitles:
         return self
 
     @filter
-    def merge_file(self, other_file: argparse.FileType()) -> Subtitles:
+    def merge_file(self, other_file: argparse.FileType(encoding='utf-8-sig')) -> Subtitles:
         """Append the styles and event lines from another file."""
         f = ass.parse(other_file)
         self.sub_file.events.extend(f.events)

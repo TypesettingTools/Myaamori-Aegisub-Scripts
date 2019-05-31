@@ -190,6 +190,12 @@ Remove all lines within the first 5 minutes:
 subdigest -i dialogue.ass --set-selection-expr "_.start < mins(5)" --remove-selected
 ```
 
+Replace styles with styles from a different ASS file:
+```
+subdigest -i previous_episode.ass --remove-selected > only_styles.ass # remove dialogue lines
+subdigest -i current_episode.ass --use-styles --remove-selected --merge-file only_styles.ass
+```
+
 ## ASSParser
 
 ### Overview

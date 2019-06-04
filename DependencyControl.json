@@ -18,14 +18,14 @@
       "description": "Provides advanced script merging, mainly for use during QC.",
       "channels": {
         "release": {
-          "version": "0.0.8",
+          "version": "0.0.9",
           "released": "2019-05-07",
           "default": true,
           "files": [
             {
               "name": ".moon",
               "url": "@{fileBaseUrl}@{fileName}",
-              "sha1": "E48CE1F4E0AFF18D1527D49E0C896D34D4AE86C0"
+              "sha1": "ED125DC823F6C23E7EB19D9FA6EFD834A4C82BC5"
             }
           ],
           "requiredModules": [
@@ -40,7 +40,7 @@
               "moduleName": "myaa.ASSParser",
               "name": "ASS Parser",
               "url": "https://github.com/TypesettingTools/Myaamori-Aegisub-Scripts",
-              "version": "0.0.1"
+              "version": "0.0.2"
             },
             {
               "moduleName": "myaa.pl",
@@ -80,6 +80,9 @@
         "0.0.8": [
           "Add GUI for easier selective importing and unimporting",
           "Fix error when importing files while other files have already been imported"
+        ],
+        "0.0.8": [
+          "Fix compatibility issue with older MoonScript"
         ]
       }
     }
@@ -93,14 +96,14 @@
       "fileBaseUrl": "@{fileBaseUrl}/@{namespace}-v@{version}/modules/@{namespacePath}",
       "channels": {
         "release": {
-          "version": "0.0.1",
+          "version": "0.0.2",
           "released": "2019-05-07",
           "default": true,
           "files": [
             {
               "name": ".moon",
               "url": "@{fileBaseUrl}@{fileName}",
-              "sha1": "903E0B2F4BC9B14CB6F4CA7D1CE0AB0F50BA4D7E"
+              "sha1": "28C5A1AE6496B65E299A0E8387698191B93C1826"
             }
           ],
           "requiredModules": [

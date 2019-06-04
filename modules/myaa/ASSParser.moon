@@ -2,7 +2,7 @@ DependencyControl = require "l0.DependencyControl"
 
 version = DependencyControl {
     name: "ASSParser",
-    version: "0.0.1",
+    version: "0.0.2",
     description: "Utility function for parsing ASS files",
     author: "Myaamori",
     url: "http://github.com/TypesettingTools/Myaamori-Aegisub-Scripts",
@@ -115,7 +115,7 @@ parser.raw_to_line = (raw, extradata=nil, format=nil)->
 
         return line
     elseif line_type == "Style"
-        boolean_map = {"-1": true, "0": false}
+        boolean_map = {["-1"]: true, ["0"]: false}
         line = parser.create_style_line
             name: fields.Name, fontname: fields.Fontname
             fontsize: tonumber(fields.Fontsize), color1: fields.PrimaryColour

@@ -1,7 +1,7 @@
 
 export script_name = "Merge Scripts"
 export script_description = "Experimental automation for QC merging/exporting"
-export script_version = "0.0.8"
+export script_version = "0.0.9"
 export script_author = "Myaamori"
 export script_namespace = "myaa.MergeScripts"
 
@@ -291,7 +291,7 @@ prompt = (text)->
 
 generate_release = (subtitles, selected_lines, active_line)->
     -- collect lines per class
-    lines = {"info": {}, "style": {}, "dialogue": {}}
+    lines = {info: {}, style: {}, dialogue: {}}
     files = {}
     for line in *subtitles
         -- find the source files for each namespace for error reporting

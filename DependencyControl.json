@@ -18,14 +18,14 @@
       "description": "Provides advanced script merging, mainly for use during QC.",
       "channels": {
         "release": {
-          "version": "0.0.9",
-          "released": "2019-05-07",
+          "version": "0.0.10",
+          "released": "2019-09-30",
           "default": true,
           "files": [
             {
               "name": ".moon",
               "url": "@{fileBaseUrl}@{fileName}",
-              "sha1": "ED125DC823F6C23E7EB19D9FA6EFD834A4C82BC5"
+              "sha1": "F2DC4F13669B648B45B9E4748698315F59F5CE92"
             }
           ],
           "requiredModules": [
@@ -83,6 +83,9 @@
         ],
         "0.0.8": [
           "Fix compatibility issue with older MoonScript"
+        ],
+        "0.0.9": [
+          "Don't warn about identical styles in different files"
         ]
       }
     }

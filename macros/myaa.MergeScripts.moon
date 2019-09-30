@@ -1,7 +1,7 @@
 
 export script_name = "Merge Scripts"
 export script_description = "Experimental automation for QC merging/exporting"
-export script_version = "0.0.9"
+export script_version = "0.0.10"
 export script_author = "Myaamori"
 export script_namespace = "myaa.MergeScripts"
 
@@ -289,6 +289,15 @@ import_gui = (subtitles, selected_lines, active_line)->
 prompt = (text)->
     aegisub.dialog.display({{class: "textbox", text: text, height: 20, width: 40}})
 
+_count_unique = (l)->
+    counter = 0
+    unique_vals = {}
+    for i in *l
+        if not unique_vals[i]
+            unique_vals[i] = true
+            counter += 1
+    return counter
+
 generate_release = (subtitles, selected_lines, active_line)->
     -- collect lines per class
     lines = {info: {}, style: {}, dialogue: {}}
@@ -346,7 +355,7 @@ generate_release = (subtitles, selected_lines, active_line)->
         text = "Found clashing styles:\n\n"
 
         for style_name, styles in pairs added_styles
-            if #styles < 2
+            if _count_unique([parser.line_to_raw style for style in *styles]) < 2
                 continue
 
             first_style = parser.line_to_raw styles[1]

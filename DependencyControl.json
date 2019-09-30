@@ -81,10 +81,10 @@
           "Add GUI for easier selective importing and unimporting",
           "Fix error when importing files while other files have already been imported"
         ],
-        "0.0.8": [
-          "Fix compatibility issue with older MoonScript"
-        ],
         "0.0.9": [
+          "Don't warn about identical styles in different files"
+        ],
+        "0.0.10": [
           "Don't warn about identical styles in different files"
         ]
       }

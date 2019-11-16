@@ -77,6 +77,11 @@ Since you may not want to release the script publicly with all styles prefixed a
 This will allow you to save a new file with the prefixes from all styles, unused styles, and commented and empty lines removed.
 It will also warn about conflicting style names.
 
+### Other misc. features
+
+* If you set the layer field of an import definition line, all lines imported from that file will have their layers incremented by that value.
+This is useful for e.g. importing dialogue lines, if you want to ensure that they are automatically layered above typesetting.
+
 ## Sub Digest
 
 ### Overview

@@ -62,6 +62,10 @@ process_imports = (subtitles, selected_lines)->
         -- bookkeeping (needed for export etc)
         import_metadata = {prefix: prefix, file: file_path, extrakeys: assfile.extradata_mapping}
 
+        -- increment layer if specified
+        for event_line in *assfile.events
+            event_line.layer += line.layer
+
         if line.effect == "import-shifted"
             -- find sync line in external file and shift lines to match the import line
             sync_line = F.list.find assfile.events, (x)-> x.effect == "sync"
@@ -446,6 +450,10 @@ export_changes = (subtitles, selected_lines, active_line)->
         file\close!
 
         imported_lines = lines[data.prefix] or {style: {}, dialogue: {}}
+
+        -- decrement layers back to original layer
+        for line in *imported_lines.dialogue
+            line.layer = math.max(line.layer - imp.layer, 0)
 
         -- shift back timings for import-shifted lines
         if data.sync_line

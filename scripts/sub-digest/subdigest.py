@@ -280,7 +280,8 @@ class Subtitles:
         """Sort all lines in the current selection based on the given field,
         either ascending or descending."""
         def _sort(events):
-            events.sort(key=lambda line: getattr(line, field), reverse=order == "DESC")
+            events[:] = sorted(events, key=lambda line: getattr(line, field),
+                               reverse=order == "DESC")
         self._process_selection(_sort)
         return self
 
@@ -290,9 +291,9 @@ class Subtitles:
         either ascending or descending."""
         def _sort(events):
             expr_c = compile(expr, '<string>', 'eval')
-            events.sort(key=lambda line: eval(expr_c, None, {"_": line, **self._helpers}),
-                        reverse=order == "DESC")
-            return events
+            events[:] = sorted(
+                events, key=lambda line: eval(expr_c, None, {"_": line, **self._helpers}),
+                reverse=order == "DESC")
         self._process_selection(_sort)
         return self
 

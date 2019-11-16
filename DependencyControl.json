@@ -18,14 +18,14 @@
       "description": "Provides advanced script merging, mainly for use during QC.",
       "channels": {
         "release": {
-          "version": "0.0.10",
-          "released": "2019-09-30",
+          "version": "0.0.11",
+          "released": "2019-11-16",
           "default": true,
           "files": [
             {
               "name": ".moon",
               "url": "@{fileBaseUrl}@{fileName}",
-              "sha1": "F2DC4F13669B648B45B9E4748698315F59F5CE92"
+              "sha1": "B0B8270F69C8200DD81CA32D4D9739AA2333C99A"
             }
           ],
           "requiredModules": [
@@ -40,7 +40,7 @@
               "moduleName": "myaa.ASSParser",
               "name": "ASS Parser",
               "url": "https://github.com/TypesettingTools/Myaamori-Aegisub-Scripts",
-              "version": "0.0.2"
+              "version": "0.0.3"
             },
             {
               "moduleName": "myaa.pl",
@@ -86,6 +86,9 @@
         ],
         "0.0.10": [
           "Don't warn about identical styles in different files"
+        ],
+        "0.0.11": [
+          "Add feature for incrementing the layer of imported lines"
         ]
       }
     }
@@ -99,14 +102,14 @@
       "fileBaseUrl": "@{fileBaseUrl}/@{namespace}-v@{version}/modules/@{namespacePath}",
       "channels": {
         "release": {
-          "version": "0.0.2",
-          "released": "2019-05-07",
+          "version": "0.0.3",
+          "released": "2019-11-16",
           "default": true,
           "files": [
             {
               "name": ".moon",
               "url": "@{fileBaseUrl}@{fileName}",
-              "sha1": "28C5A1AE6496B65E299A0E8387698191B93C1826"
+              "sha1": "543D2ADD5FD7F4DB9CB34548475AB86313748399"
             }
           ],
           "requiredModules": [
@@ -119,6 +122,11 @@
             }
           ]
         }
+      },
+      "changelog": {
+        "0.0.3": [
+          "Properly escape unprintable characters when exporting extradata"
+        ]
       }
     },
     "myaa.pl": {

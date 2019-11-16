@@ -157,7 +157,7 @@ parser.inline_string_encode = (input)->
     output = {}
     for i=1,#input
         c = input\byte i
-        if c <= 0x1F or c == 0x23 or c == 0x2C or c == 0x3A or c == 0x7C
+        if c <= 0x1F or c >= 0x80 or c == 0x23 or c == 0x2C or c == 0x3A or c == 0x7C
             table.insert output, string.format "#%02X", c
         else
             table.insert output, input\sub i,i

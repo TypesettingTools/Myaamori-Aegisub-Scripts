@@ -244,8 +244,8 @@ class ASSFile
 
         -- read lines from file, sort into sections
         for row in file\lines!
-            -- remove BOM if present and trim
-            row = F.string.trim row\gsub "^\xEF\xBB\xBF", ""
+            -- remove BOM if present, remove newlines, and trim leading spaces
+            row = F.string.trimLeft (row\gsub "^\xEF\xBB\xBF", "")\gsub "[\r\n]*$", ""
 
             if row == "" or row\match "^;"
                 continue

@@ -292,20 +292,15 @@ class ASSFile
 parser.parse_file = (file)->
     return ASSFile file
 
-parser.generate_styles_section = (styles)->
-    out_text = {}
-    table.insert out_text, "[V4+ Styles]\n"
-    table.insert out_text, "Format: #{STYLE_FORMAT_STRING}\n"
+parser.generate_styles_section = (styles, callback)->
+    callback "[V4+ Styles]\n"
+    callback "Format: #{STYLE_FORMAT_STRING}\n"
     for line in *styles
-        table.insert out_text, parser.line_to_raw(line) .. "\n"
+        callback parser.line_to_raw(line) .. "\n"
 
-    return table.concat out_text
-
-parser.generate_events_section = (events, extradata_mapping)->
-    out_events = {}
-    out_extradata = {}
-    table.insert out_events, "[Events]\n"
-    table.insert out_events, "Format: #{EVENT_FORMAT_STRING}\n"
+parser.generate_events_section = (events, extradata_mapping, callback)->
+    callback "[Events]\n"
+    callback "Format: #{EVENT_FORMAT_STRING}\n"
 
     -- find the largest extradata ID seen so far
     last_eid = 0
@@ -339,11 +334,11 @@ parser.generate_events_section = (events, extradata_mapping)->
                 indexstring = table.concat ["=#{ind}" for ind in *lineindices]
                 line.text = "{#{indexstring}}" .. line.text
 
-        table.insert out_events, parser.line_to_raw(line) .. "\n"
+        callback parser.line_to_raw(line) .. "\n"
 
     out_indices = [ind for ind, _ in pairs extradata_to_write]
     if #out_indices > 0
-        table.insert out_extradata, "[Aegisub Extradata]\n"
+        callback "\n[Aegisub Extradata]\n"
 
         table.sort out_indices
         for ind in *out_indices
@@ -354,43 +349,39 @@ parser.generate_events_section = (events, extradata_mapping)->
                 value = "u" .. parser.uuencode value
             else
                 value = "e" .. encoded_data
-            table.insert out_extradata, "Data: #{ind},#{key},#{value}\n"
+            callback "Data: #{ind},#{key},#{value}\n"
 
-        return table.concat(out_events), table.concat(out_extradata)
-    else
-        return table.concat out_events
-
-parser.generate_script_info_section = (lines, bom=true)->
-    out_text = {}
+parser.generate_script_info_section = (lines, callback, bom=true)->
     if bom
-        table.insert out_text, "\xEF\xBB\xBF"
-    table.insert out_text, "[Script Info]\n"
+        callback "\xEF\xBB\xBF"
+    callback "[Script Info]\n"
     for line in *lines
-        table.insert out_text, parser.line_to_raw(line) .. "\n"
-    return table.concat out_text
+        callback parser.line_to_raw(line) .. "\n"
 
-parser.generate_aegisub_garbage_section = (lines)->
-    out_text = {}
-    table.insert out_text, "[Aegisub Project Garbage]\n"
+parser.generate_aegisub_garbage_section = (lines, callback)->
+    callback "[Aegisub Project Garbage]\n"
     for line in *lines
-        table.insert out_text, parser.line_to_raw(line) .. "\n"
-    return table.concat out_text
+        callback parser.line_to_raw(line) .. "\n"
 
-parser.generate_file = (script_info, aegisub_garbage, styles, events, extradata_mapping)->
-    sections = {}
+parser.generate_file = (script_info, aegisub_garbage, styles, events, extradata_mapping, callback)->
+    sec_added = false
+    new_section = ->
+        if sec_added
+            callback "\n"
+        sec_added = true
+
     if script_info
-        table.insert sections, parser.generate_script_info_section script_info
+        new_section!
+        parser.generate_script_info_section script_info, callback
     if aegisub_garbage
-        table.insert sections, parser.generate_aegisub_garbage_section aegisub_garbage
+        new_section!
+        parser.generate_aegisub_garbage_section aegisub_garbage, callback
     if styles
-        table.insert sections, parser.generate_styles_section styles
+        new_section!
+        parser.generate_styles_section styles, callback
     if events
-        events_section, extradata_section = parser.generate_events_section events, extradata_mapping
-        table.insert sections, events_section
-        if extradata_section
-            table.insert sections, extradata_section
-
-    return table.concat sections, "\n"
+        new_section!
+        parser.generate_events_section events, extradata_mapping, callback
 
 parser.version = version
 return version\register parser

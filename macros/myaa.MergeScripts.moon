@@ -377,8 +377,6 @@ generate_release = (subtitles, selected_lines, active_line)->
         if not prompt text
             return
 
-    out_file = parser.generate_file lines.info, nil, lines.style, lines.dialogue
-
     script_path = aegisub.decode_path("?script") .. "/"
     script_path = "" if script_path == "?script/"
     out_file_name = aegisub.dialog.save "Save release candidate", "", script_path, "*.ass"
@@ -390,7 +388,10 @@ generate_release = (subtitles, selected_lines, active_line)->
         aegisub.log 0, "FATAL: Could not open #{out_file_name} for writing: #{error}\n"
         return
 
-    file\write out_file
+
+    parser.generate_file lines.info, nil, lines.style, lines.dialogue, nil, (line) ->
+        file\write line
+
     file\close!
 
 get_imported_lines = (subtitles)->
@@ -438,7 +439,7 @@ export_changes = (subtitles, selected_lines, active_line)->
             aegisub.log 1, "ERROR: Could not find #{data.file}, will not export this file.\n"
             continue
 
-        out_text = {}
+        header_text = {}
 
         -- keep all lines before the styles section as is
         for row in file\lines!
@@ -446,7 +447,7 @@ export_changes = (subtitles, selected_lines, active_line)->
             if row == "[V4+ Styles]"
                 break
 
-            table.insert out_text, "#{row}\n"
+            table.insert header_text, "#{row}\n"
         file\close!
 
         imported_lines = lines[data.prefix] or {style: {}, dialogue: {}}
@@ -462,10 +463,7 @@ export_changes = (subtitles, selected_lines, active_line)->
                 line.start_time = math.max(line.start_time - sync_diff, 0)
                 line.end_time = math.max(line.end_time - sync_diff, 0)
 
-        table.insert out_text, parser.generate_file nil, nil, imported_lines.style,
-            imported_lines.dialogue, data.extrakeys
-
-        outputs[data.file] = table.concat out_text
+        outputs[data.file] = {header: table.concat(header_text), lines: imported_lines, extra: data.extrakeys}
 
     text = "Do you really wish to overwrite the below files?\n\n"
     text ..= table.concat [fname for fname, output in pairs outputs], "\n"
@@ -475,7 +473,12 @@ export_changes = (subtitles, selected_lines, active_line)->
     -- write to files
     for fname, output in pairs outputs
         file = io.open fname, 'w'
-        file\write output
+
+        file\write output.header
+        parser.generate_file nil, nil, output.lines.style,
+            output.lines.dialogue, output.extra, (line) ->
+                file\write line
+
         file\close!
 
 script_is_saved = (subtitles, selected_lines, active_line)->

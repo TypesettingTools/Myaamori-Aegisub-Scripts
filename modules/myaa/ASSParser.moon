@@ -2,7 +2,7 @@ DependencyControl = require "l0.DependencyControl"
 
 version = DependencyControl {
     name: "ASSParser",
-    version: "0.0.3",
+    version: "0.0.4",
     description: "Utility function for parsing ASS files",
     author: "Myaamori",
     url: "http://github.com/TypesettingTools/Myaamori-Aegisub-Scripts",

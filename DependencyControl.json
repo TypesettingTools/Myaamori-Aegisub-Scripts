@@ -18,14 +18,14 @@
       "description": "Provides advanced script merging, mainly for use during QC.",
       "channels": {
         "release": {
-          "version": "0.0.11",
-          "released": "2019-11-16",
+          "version": "0.0.12",
+          "released": "2019-11-24",
           "default": true,
           "files": [
             {
               "name": ".moon",
               "url": "@{fileBaseUrl}@{fileName}",
-              "sha1": "B0B8270F69C8200DD81CA32D4D9739AA2333C99A"
+              "sha1": "B0178306E2396F0D56C8060027450D02FB52DBE1"
             }
           ],
           "requiredModules": [
@@ -40,7 +40,7 @@
               "moduleName": "myaa.ASSParser",
               "name": "ASS Parser",
               "url": "https://github.com/TypesettingTools/Myaamori-Aegisub-Scripts",
-              "version": "0.0.3"
+              "version": "0.0.4"
             },
             {
               "moduleName": "myaa.pl",
@@ -89,6 +89,9 @@
         ],
         "0.0.11": [
           "Add feature for incrementing the layer of imported lines"
+        ],
+        "0.0.12": [
+          "When writing ASS files, generate and output one line at a time to avoid memory issues"
         ]
       }
     }
@@ -102,14 +105,14 @@
       "fileBaseUrl": "@{fileBaseUrl}/@{namespace}-v@{version}/modules/@{namespacePath}",
       "channels": {
         "release": {
-          "version": "0.0.3",
-          "released": "2019-11-16",
+          "version": "0.0.4",
+          "released": "2019-11-24",
           "default": true,
           "files": [
             {
               "name": ".moon",
               "url": "@{fileBaseUrl}@{fileName}",
-              "sha1": "543D2ADD5FD7F4DB9CB34548475AB86313748399"
+              "sha1": "362971D958E5EB8FBD8B1BBC1ADAD990B7372734"
             }
           ],
           "requiredModules": [
@@ -126,6 +129,9 @@
       "changelog": {
         "0.0.3": [
           "Properly escape unprintable characters when exporting extradata"
+        ],
+        "0.0.4": [
+          "API change: generate_* now take a callback that receives one line at a time instead of returning the whole file"
         ]
       }
     },

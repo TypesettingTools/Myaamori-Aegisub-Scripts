@@ -1,7 +1,7 @@
 
 export script_name = "Merge Scripts"
 export script_description = "Experimental automation for QC merging/exporting"
-export script_version = "0.0.11"
+export script_version = "0.0.12"
 export script_author = "Myaamori"
 export script_namespace = "myaa.MergeScripts"
 
@@ -11,7 +11,7 @@ depctrl = DependencyControl {
         "json",
         {"myaa.pl", version: "1.6.0", url: "https://github.com/Myaamori/Penlight",
          feed: "https://raw.githubusercontent.com/TypesettingTools/Myaamori-Aegisub-Scripts/master/DependencyControl.json"}
-        {"myaa.ASSParser", version: "0.0.1", url: "https://github.com/TypesettingTools/Myaamori-Aegisub-Scripts",
+        {"myaa.ASSParser", version: "0.0.4", url: "https://github.com/TypesettingTools/Myaamori-Aegisub-Scripts",
          feed: "https://raw.githubusercontent.com/TypesettingTools/Myaamori-Aegisub-Scripts/master/DependencyControl.json"}
         {"l0.Functional", version: "0.6.0", url: "https://github.com/TypesettingTools/Functional",
          feed: "https://raw.githubusercontent.com/TypesettingTools/Functional/master/DependencyControl.json"}

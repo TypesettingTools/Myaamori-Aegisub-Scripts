@@ -406,30 +406,31 @@ Example:
 hello
 ```
 
-#### generate_styles_section(styles)
+#### generate_styles_section(styles, callback)
 
 Generates a V4+ Styles section from the given style lines.
+Each outputted line is passed to the callback function.
 
 Arguments:
 
 * **styles**: A list of style objects.
-
-Returns: The corresponding V4+ Styles section as a string.
+* **callback**: A callback accepting one string argument, namely one line to output.
 
 Example:
 
 ```moon
->>> parse.generate_styles_section style_list
+>>> parse.generate_styles_section style_list, (line) -> io.write line
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Default,Myriad Pro Light,79,&H00FFFFFF,&H000000FF,&H00613C38,&HC0171010,0,0,0,0,100,100,0,0,1,3.8,2.4,2,144,144,60,1
 Style: Alt,Myriad Pro Light,79,&H00FFFFFF,&H000000FF,&H007B437F,&H96171010,0,0,0,0,100,100,0,0,1,3.8,2.4,2,144,144,50,1
 ```
 
-#### generate_events_section(events, extradata_mapping=nil)
+#### generate_events_section(events, extradata_mapping=nil, callback)
 
 Generates an Events section from the given dialogue lines.
 If `extradata_mapping` is given, also generates an extradata section.
+Each outputted line is passed to the callback function.
 
 Arguments:
 
@@ -437,25 +438,20 @@ Arguments:
 * **extradata_mapping**: A map from extradata key and value to numerical extradata ID, of the same format as `ASSFile.extradata_mapping`.
 May be `{}`.
 Note that `extradata_mapping` will be populated with new IDs for unseen extradata key/value pairs.
-
-Returns:
-
-* The corresponding Events section as a string.
-* The extradata section as a string if `extradata_mapping` was supplied and the extradata section is not empty, otherwise `nil`.
+* **callback**: A callback accepting one string argument, namely one line to output.
 
 Example:
 
 ```moon
 >>> extradata_mapping = {}
->>> events, extradata = parser.generate_events_section dialogue_lines, extradata_mapping
->>> events
+>>> events, extradata = parser.generate_events_section dialogue_lines, extradata_mapping, (line) -> io.write line
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 Dialogue: 0,0:23:13.78,0:23:16.16,Default,,0,0,0,,{=1}{\pos(562.423,712.71)\frz-7.456}T
 Dialogue: 0,0:23:13.78,0:23:16.16,Default,,0,0,0,,{=2}{\pos(572.74,714.338)\frz-9.882}e
 Dialogue: 0,0:23:13.78,0:23:16.16,Default,,0,0,0,,{=2}{\pos(582.064,715.864)\frz-9.882}x
 Dialogue: 0,0:23:13.78,0:23:16.16,Default,,0,0,0,,{=2}{\pos(588.91,717.113)\frz-11.157}t
->>> extradata
+
 [Aegisub Extradata]
 Data: 1,l0.MoveAlongPath,e{"orgLine"#3A"{\\clip(m 557 712 b 715 731 921 868 1200 354)}Text"#2C"settings"#3A{"relPos"#3Afalse#2C"aniPos"#3Atrue#2C"aniFrz"#3Atrue#2C"accel"#3A1#2C"cfrMode"#3Atrue#2C"reverseLine"#3Afalse#2C"flipFrz"#3Afalse}#2C"id"#3A"d5531114-a9ce-4bdd-b48e-a3f536cc954a"}
 Data: 2,l0.MoveAlongPath,e{"settings"#3A{"relPos"#3Afalse#2C"aniPos"#3Atrue#2C"aniFrz"#3Atrue#2C"accel"#3A1#2C"cfrMode"#3Atrue#2C"reverseLine"#3Afalse#2C"flipFrz"#3Afalse}#2C"id"#3A"d5531114-a9ce-4bdd-b48e-a3f536cc954a"}
@@ -463,33 +459,35 @@ Data: 2,l0.MoveAlongPath,e{"settings"#3A{"relPos"#3Afalse#2C"aniPos"#3Atrue#2C"a
 {"l0.MoveAlongPath":{"{\"orgLine\":\"{\\\\clip(m 557 712 b 715 731 921 868 1200 354)}Text\",\"settings\":{\"relPos\":false,\"aniPos\":true,\"aniFrz\":true,\"accel\":1,\"cfrMode\":true,\"reverseLine\":false,\"flipFrz\":false},\"id\":\"d5531114-a9ce-4bdd-b48e-a3f536cc954a\"}":1,"{\"settings\":{\"relPos\":false,\"aniPos\":true,\"aniFrz\":true,\"accel\":1,\"cfrMode\":true,\"reverseLine\":false,\"flipFrz\":false},\"id\":\"d5531114-a9ce-4bdd-b48e-a3f536cc954a\"}":2}}
 ```
 
-#### generate_script_info_section(lines, bom=true)
+#### generate_script_info_section(lines, callback, bom=true)
 
 Generates a Script Info section from the given info lines.
+Each outputted line is passed to the callback function.
 
 Arguments:
 
 * **lines**: A list of info lines.
+* **callback**: A callback accepting one string argument, namely one line to output.
 * **bom**: If true, prepend the section with the UTF-8 byte order mark.
 Aegisub expects all Unicode-encoded ASS files to start with a BOM;
 don't set to false unless you know what you're doing.
 
-Returns: The corresponding Script Info section as a string.
-
-#### generate_aegisub_garbage_section(lines)
+#### generate_aegisub_garbage_section(lines, callback)
 
 Generates an Aegisub Project Garbage section from the given info lines.
+Each outputted line is passed to the callback function.
 
 Arguments:
 
 * **lines**: A list of info lines.
+* **callback**: A callback accepting one string argument, namely one line to output.
 
-Returns: The corresponding Aegisub Project Garbage section as a string.
-
-#### generate_file(script_info=nil, aegisub_garbage=nil, styles=nil, events=nil, extradata_mapping=nil)
+#### generate_file(script_info=nil, aegisub_garbage=nil, styles=nil, events=nil, extradata_mapping=nil, callback)
 
 Generates an ASS file from the given lines in one go.
 If any argument is `nil`, the corresponding section will not be included.
+Each outputted line is passed to the callback function.
+The first output will always include the UTF-8 BOM.
 
 Arguments:
 
@@ -498,6 +496,4 @@ Arguments:
 * **styles**: A list of style lines passed to `generate_styles_section`.
 * **events**: A list of dialogue lines passed to `generate_events_section`.
 * **extradata_mapping**: A mapping from extradata key/value pairs to IDs, passed to `generate_events_section`.
-
-Returns: A string containing the corresponding sections.
-Will start with the UTF-8 BOM.
+* **callback**: A callback accepting one string argument, namely one line to output.

@@ -2,9 +2,12 @@
 from __future__ import annotations
 import argparse
 import codecs
+import collections
 import datetime
 import inspect
 import io
+import logging
+import pathlib
 import re
 import sys
 import warnings
@@ -79,8 +82,9 @@ def generate_argument(group, f):
 @filter_group
 class Subtitles:
 
-    def __init__(self, sub_file):
+    def __init__(self, sub_file, filename):
         self.sub_file = sub_file
+        self.filename = filename
         self.section = "events"
         self.selection_clear()
         self._fps = 24000 / 1001
@@ -275,6 +279,77 @@ class Subtitles:
             self.sub_file.styles.append(style)
         return self
 
+    def _import_file(self, imp_definition, styles, events, fields):
+        fname = imp_definition.text
+        shifted = imp_definition.effect == 'import-shifted'
+
+        path = pathlib.Path(self.filename).parent / fname
+        with path.open(encoding='utf-8-sig') as f:
+            imp = ass.parse(f)
+
+        if shifted:
+            try:
+                sync_line = next(line for line in imp.events
+                                 if line.effect == 'sync')
+            except StopIteration:
+                raise ValueError(f"No sync line in {fname}")
+
+            time_diff = imp_definition.start - sync_line.start
+
+            for line in imp.events:
+                line.start += time_diff
+                line.end += time_diff
+
+        for line in imp.events:
+            line.layer += imp_definition.layer
+
+        events.extend(imp.events)
+
+        for style in imp.styles:
+            if style.name in styles:
+                if styles[style.name].dump() != style.dump():
+                    logging.warning(f"Ignoring conflicting style {style.name} from {fname}")
+            else:
+                styles[style.name] = style
+
+        for field, value in imp.fields.items():
+            if field in fields and fields[field] != value:
+                logging.warning(f"Ignoring conflicting value {value} for {field} from {fname}")
+            else:
+                fields[field] = value
+
+    def _import_files(self, field=None, pattern=None):
+        if self.filename is None:
+            raise ValueError("Cannot import when reading from stdin")
+
+        styles = collections.OrderedDict()
+        events = []
+        fields = {}
+
+        for line in self.sub_file.events:
+            if line.effect in ('import', 'import-shifted') and \
+                    (field is None or re.search(pattern, getattr(line, field))):
+                self._import_file(line, styles, events, fields)
+            else:
+                events.append(line)
+
+        self.sub_file.events = events
+        self.sub_file.styles = list(styles.values())
+        self.sub_file.fields = fields
+
+    @filter
+    def ms_import(self) -> Subtitles:
+        """Import files according to import definitions in a file using Merge Scripts syntax."""
+        self._import_files()
+        return self
+
+    @filter
+    def ms_import_filter(self, field: str, pattern: str) -> Subtitles:
+        """Import files according to import definitions in a file using Merge Scripts syntax.
+        Only import files corresponding to import definitions matching the given pattern."""
+        self._import_files(field, pattern)
+        return self
+
     @filter
     def sort_field(self, field: str, order: {"ASC", "DESC"}) -> Subtitles:
         """Sort all lines in the current selection based on the given field,
@@ -395,12 +470,14 @@ def main():
     args = parser.parse_args()
 
     if args.input is None or args.input == '-':
+        filename = None
         sub_obj = ass.parse(codecs.getreader('utf-8-sig')(sys.stdin.buffer))
     else:
+        filename = args.input
         with open(args.input, 'r', encoding='utf-8-sig') as f:
             sub_obj = ass.parse(f)
 
-    sub_obj = Subtitles(sub_obj)
+    sub_obj = Subtitles(sub_obj, filename)
 
     for func, filter_args in getattr(args, 'chain', []):
         filt = getattr(sub_obj, func)

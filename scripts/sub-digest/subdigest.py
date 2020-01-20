@@ -419,6 +419,16 @@ class Subtitles:
         return self
 
     @filter
+    def remove_comments(self) -> Subtitles:
+        """Removes all commented lines in current selection.
+        Clears the selection if the current selection is the events section."""
+        self.sub_file.events = [event for event in self.sub_file.events
+                                if event.TYPE != "Comment"]
+        if self.section == "events":
+            self.selection_clear()
+        return self
+
+    @filter
     def get_field(self, field: str) -> Text:
         """Returns the given field from all lines in the current selection as text,
         newline separated."""

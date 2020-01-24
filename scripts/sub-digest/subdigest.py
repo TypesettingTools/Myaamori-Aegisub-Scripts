@@ -322,11 +322,15 @@ class Subtitles:
         if self.filename is None:
             raise ValueError("Cannot import when reading from stdin")
 
-        styles = collections.OrderedDict()
+        styles = collections.OrderedDict((style.name, style)
+                                         for style in self.sub_file.styles
+                                         if not re.match(r'\d+\$', style.name))
         events = []
         fields = {}
 
         for line in self.sub_file.events:
+            if re.match(r'\d+\$', line.style):
+                continue
             if line.effect in ('import', 'import-shifted') and \
                     (field is None or re.search(pattern, getattr(line, field))):
                 self._import_file(line, styles, events, fields)

@@ -88,6 +88,8 @@ class Subtitles:
         self.section = "events"
         self.selection_clear()
         self._fps = 24000 / 1001
+        self._ms_count = 0
+        self._ms_files = {}
 
         self._helpers = {
             "secs": lambda t: datetime.timedelta(seconds=t),
@@ -280,8 +282,12 @@ class Subtitles:
         return self
 
     def _import_file(self, imp_definition, styles, events, fields):
-        fname = imp_definition.text
+        # strip extradata info
+        fname = re.sub(r"^\{=\d+(,\d+)*\}", "", imp_definition.text)
         shifted = imp_definition.effect == 'import-shifted'
+
+        self._ms_count += 1
+        self._ms_files[self._ms_count] = fname
 
         path = pathlib.Path(self.filename).parent / fname
         with path.open(encoding='utf-8-sig') as f:
@@ -302,15 +308,12 @@ class Subtitles:
 
         for line in imp.events:
             line.layer += imp_definition.layer
-
-        events.extend(imp.events)
+            line.style = f"{self._ms_count}${line.style}"
+            events.append(line)
 
         for style in imp.styles:
-            if style.name in styles:
-                if styles[style.name].dump() != style.dump():
-                    logging.warning(f"Ignoring conflicting style {style.name} from {fname}")
-            else:
-                styles[style.name] = style
+            style.name = f"{self._ms_count}${style.name}"
+            styles[style.name] = style
 
         for field, value in imp.fields.items():
             if field in fields and fields[field] != value:

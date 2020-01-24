@@ -358,6 +358,26 @@ class Subtitles:
         return self
 
     @filter
+    def ms_remove_namespace(self):
+        styles = collections.OrderedDict()
+        for style in self.sub_file.styles:
+            num, style.name = re.match(r"^(?:(\d+)\$)?(.*)", style.name).groups()
+
+            if style.name in styles:
+                if styles[style.name].dump() != style.dump():
+                    fname = self._ms_files[int(num)] if num is not None else self.filename
+                    logging.warning(f"Ignoring conflicting style {style.name} from {fname}")
+            else:
+                styles[style.name] = style
+
+        self.sub_file.styles = list(styles.values())
+
+        for line in self.sub_file.events:
+            line.style = re.sub(r"^\d+\$", "", line.style)
+
+        return self
+
+    @filter
     def sort_field(self, field: str, order: {"ASC", "DESC"}) -> Subtitles:
         """Sort all lines in the current selection based on the given field,
         either ascending or descending."""

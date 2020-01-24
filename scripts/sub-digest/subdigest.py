@@ -347,7 +347,7 @@ class Subtitles:
     @filter
     def ms_import(self) -> Subtitles:
         """Import files according to import definitions in a file using Merge Scripts syntax."""
-        self._import_files()
+        self.ms_import_filter(None, None)
         return self
 
     @filter
@@ -358,7 +358,7 @@ class Subtitles:
         return self
 
     @filter
-    def ms_remove_namespace(self):
+    def ms_remove_namespace(self) -> Subtitles:
         styles = collections.OrderedDict()
         for style in self.sub_file.styles:
             num, style.name = re.match(r"^(?:(\d+)\$)?(.*)", style.name).groups()
@@ -376,6 +376,18 @@ class Subtitles:
             line.style = re.sub(r"^\d+\$", "", line.style)
 
         return self
+
+    @filter
+    def ms_import_rc(self) -> Subtitles:
+        self.ms_import_rc_filter(None, None)
+        return self
+
+    @filter
+    def ms_import_rc_filter(self, field: str, pattern: str) -> Subtitles:
+        self.ms_import_filter(field, pattern)
+        self.remove_comments()
+        self.remove_unused_styles()
+        self.ms_remove_namespace()
 
     @filter
     def sort_field(self, field: str, order: {"ASC", "DESC"}) -> Subtitles:

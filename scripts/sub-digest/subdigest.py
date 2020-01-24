@@ -346,19 +346,24 @@ class Subtitles:
 
     @filter
     def ms_import(self) -> Subtitles:
-        """Import files according to import definitions in a file using Merge Scripts syntax."""
+        """Import files according to import definitions in a file using Merge Scripts syntax.
+        Discards styles and lines already imported from external files.
+        Imported styles will be prefixed by a namespace identifier, e.g. 1$Default."""
         self.ms_import_filter(None, None)
         return self
 
     @filter
     def ms_import_filter(self, field: str, pattern: str) -> Subtitles:
         """Import files according to import definitions in a file using Merge Scripts syntax.
+        Discards styles and lines already imported from external files.
+        Imported styles will be prefixed by a namespace identifier, e.g. 1$Default.
         Only import files corresponding to import definitions matching the given pattern."""
         self._import_files(field, pattern)
         return self
 
     @filter
     def ms_remove_namespace(self) -> Subtitles:
+        """Remove namespace identifiers from style names (e.g. change 1$Default to Default)."""
         styles = collections.OrderedDict()
         for style in self.sub_file.styles:
             num, style.name = re.match(r"^(?:(\d+)\$)?(.*)", style.name).groups()
@@ -379,11 +384,15 @@ class Subtitles:
 
     @filter
     def ms_import_rc(self) -> Subtitles:
+        """Equivalent to --ms-import --remove-comments --remove-unused-styles
+        --ms-remove-namespace."""
         self.ms_import_rc_filter(None, None)
         return self
 
     @filter
     def ms_import_rc_filter(self, field: str, pattern: str) -> Subtitles:
+        """Equivalent to --ms-import-filter FIELD PATTERN --remove-comments --remove-unused-styles
+        --ms-remove-namespace."""
         self.ms_import_filter(field, pattern)
         self.remove_comments()
         self.remove_unused_styles()

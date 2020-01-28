@@ -397,6 +397,7 @@ class Subtitles:
         self.remove_comments()
         self.remove_unused_styles()
         self.ms_remove_namespace()
+        return self
 
     @filter
     def sort_field(self, field: str, order: {"ASC", "DESC"}) -> Subtitles:

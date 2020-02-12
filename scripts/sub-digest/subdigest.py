@@ -448,6 +448,20 @@ class Subtitles:
         return self
 
     @filter
+    def shift(self, expr: str) -> Subtitles:
+        """Shifts the start and end time by a specified amount.
+        Example: --shift "secs(-10)".
+        """
+        expr_c = compile(expr, '<string>', 'eval')
+        def _modify(lines):
+            for line in lines:
+                time = eval(expr_c, None, {"_": line, **self._helpers})
+                line.start += time
+                line.end += time
+        self._process_selection(_modify)
+        return self
+
+    @filter
     def remove_all_tags(self) -> Subtitles:
         """Remove all tags (everything in the text field enclosed in {})
         from all dialogue lines. No-op if current section is not

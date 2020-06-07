@@ -131,7 +131,7 @@ Some commands have alternative versions that take arbitrary Python expressions.
 In these expressions, the current line will be available as `_`.
 There are also a number of functions available to make it easier to modify the start and end times of a line, which are represented as `datetime.timedelta` objects, namely: `mins(x)`, `secs(x)`, `millis(x)` and `frames(x)`, which take a float and return a corresponding `timedelta` object.
 For `frames(x)`, you can set the framerate to use for calculations using `--fps`, e.g. `--fps 24000/1001`.
-For instance, in order to add a lead-in of 100 ms to all lines, you can use `--modify-expr start _.start - secs(0.1)`.
+For instance, in order to add a lead-in of 100 ms to all lines, you can use `--modify-expr start "_.start - secs(0.1)"`.
 
 ### Use from Python (interactive session)
 

@@ -60,7 +60,7 @@ process_imports = (subtitles, selected_lines)->
         file\close!
 
         -- bookkeeping (needed for export etc)
-        import_metadata = {prefix: prefix, file: file_path, extrakeys: assfile.extradata_mapping,
+        import_metadata = {prefix: prefix, file: line.text, extrakeys: assfile.extradata_mapping,
                            script_info: assfile.script_info,
                            aegisub_garbage: assfile.aegisub_garbage}
 
@@ -449,7 +449,8 @@ export_changes = (subtitles, selected_lines, active_line)->
                 line.start_time = math.max(line.start_time - sync_diff, 0)
                 line.end_time = math.max(line.end_time - sync_diff, 0)
 
-        outputs[data.file] = {script_info: data.script_info, aegisub_garbage: data.aegisub_garbage,
+        file_path = path.join script_path, data.file
+        outputs[file_path] = {script_info: data.script_info, aegisub_garbage: data.aegisub_garbage,
                               lines: imported_lines, extra: data.extrakeys}
 
     text = "Do you really wish to overwrite the below files?\n\n"

@@ -60,7 +60,9 @@ process_imports = (subtitles, selected_lines)->
         file\close!
 
         -- bookkeeping (needed for export etc)
-        import_metadata = {prefix: prefix, file: file_path, extrakeys: assfile.extradata_mapping}
+        import_metadata = {prefix: prefix, file: file_path, extrakeys: assfile.extradata_mapping,
+                           script_info: assfile.script_info,
+                           aegisub_garbage: assfile.aegisub_garbage}
 
         -- increment layer if specified
         for event_line in *assfile.events
@@ -434,22 +436,6 @@ export_changes = (subtitles, selected_lines, active_line)->
         if not data
             continue
 
-        file = io.open data.file
-        if not file
-            aegisub.log 1, "ERROR: Could not find #{data.file}, will not export this file.\n"
-            continue
-
-        header_text = {}
-
-        -- keep all lines before the styles section as is
-        for row in file\lines!
-            row = F.string.trim row
-            if row == "[V4+ Styles]"
-                break
-
-            table.insert header_text, "#{row}\n"
-        file\close!
-
         imported_lines = lines[data.prefix] or {style: {}, dialogue: {}}
 
         -- decrement layers back to original layer
@@ -463,7 +449,8 @@ export_changes = (subtitles, selected_lines, active_line)->
                 line.start_time = math.max(line.start_time - sync_diff, 0)
                 line.end_time = math.max(line.end_time - sync_diff, 0)
 
-        outputs[data.file] = {header: table.concat(header_text), lines: imported_lines, extra: data.extrakeys}
+        outputs[data.file] = {script_info: data.script_info, aegisub_garbage: data.aegisub_garbage,
+                              lines: imported_lines, extra: data.extrakeys}
 
     text = "Do you really wish to overwrite the below files?\n\n"
     text ..= table.concat [fname for fname, output in pairs outputs], "\n"
@@ -474,8 +461,7 @@ export_changes = (subtitles, selected_lines, active_line)->
     for fname, output in pairs outputs
         file = io.open fname, 'w'
 
-        file\write output.header
-        parser.generate_file nil, nil, output.lines.style,
+        parser.generate_file output.script_info, output.aegisub_garbage, output.lines.style,
             output.lines.dialogue, output.extra, (line) ->
                 file\write line
 

@@ -430,6 +430,13 @@ export_changes = (subtitles, selected_lines, active_line)->
     script_path = aegisub.decode_path "?script"
     outputs = {}
 
+    dialog = {
+        {
+            class: "label", label: "Select files to overwrite:", x: 0, y: 0
+        }
+    }
+
+    y = 1
     -- find import definition lines and construct the corresponding output files
     for imp in *imports
         data = get_data imp
@@ -453,13 +460,21 @@ export_changes = (subtitles, selected_lines, active_line)->
         outputs[file_path] = {script_info: data.script_info, aegisub_garbage: data.aegisub_garbage,
                               lines: imported_lines, extra: data.extrakeys}
 
-    text = "Do you really wish to overwrite the below files?\n\n"
-    text ..= table.concat [fname for fname, output in pairs outputs], "\n"
-    if not prompt text
+        table.insert dialog, {
+            class: "checkbox", label: data.file, x: 0, y: y, hint: file_path,
+            name: file_path, value: true
+        }
+        y += 1
+
+    button, result = aegisub.dialog.display dialog
+    if not button
         return
 
     -- write to files
     for fname, output in pairs outputs
+        if not result[fname]
+            continue
+
         file = io.open fname, 'w'
 
         parser.generate_file output.script_info, output.aegisub_garbage, output.lines.style,

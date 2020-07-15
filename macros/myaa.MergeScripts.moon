@@ -19,11 +19,39 @@ depctrl = DependencyControl {
 }
 
 json, pl, parser, F = depctrl\requireModules!
-{:path, :stringx} = pl
+{:path, :stringx, :dir} = pl
 stringx.import!
 
 get_data = (line)->
     line.extra and line.extra[script_namespace] and json.decode line.extra[script_namespace]
+
+relpath = (f, script_path)->
+    rpath = path.relpath f, script_path
+
+    if not path.is_windows
+        return rpath
+
+    -- recover original capitalization by replacing the end of
+    -- the case normalized path with the corresponding part from the
+    -- original f
+    f = path.normpath f
+    local k
+    k = 0
+    for i=1,math.min(#f, #rpath)
+        ri = #rpath - i + 1
+        fi = #f - i + 1
+        if rpath\sub(ri, ri) != f\sub(fi, fi)\lower!
+            break
+        k = i
+
+    rpath = (rpath\sub 1, #rpath - k) .. (f\sub #f - k + 1, #f)
+    return rpath\gsub '\\', '/'
+
+glob = (base, file)->
+    parentdir, name = file\match "^(.-)([^/]+)$"
+    parentabs = path.join base, parentdir or "."
+    paths = dir.getfiles parentabs, name
+    return [relpath p, base for p in *paths]
 
 process_imports = (subtitles, selected_lines)->
     selected_lines = selected_lines or [i for i, sub in ipairs subtitles]
@@ -35,7 +63,8 @@ process_imports = (subtitles, selected_lines)->
     for line in *subtitles
         data = get_data line
         if data
-            used_prefixes[data.prefix] = true
+            for file in *data
+                used_prefixes[file.prefix] = true
 
     imports = {}
     prefix = 0
@@ -45,45 +74,55 @@ process_imports = (subtitles, selected_lines)->
         if (line.effect != "import" and line.effect != "import-shifted") or
                 (line.extra and line.extra[script_namespace])
             continue
-        prefix += 1
-        while used_prefixes[prefix]
-            prefix += 1
 
-        -- parse file to import
-        file_path = path.join script_path, line.text
-        file = io.open file_path
-        if not file
-            aegisub.log 0, "FATAL: Could not find #{file_path}\n"
+        files = glob script_path, line.text
+        if #files == 0
+            aegisub.log 0, "FATAL: No files matching #{line.text}\n"
             return nil
 
-        assfile = parser.parse_file file
-        file\close!
+        imported_files = {}
+        import_metadata = {}
+        for import_file in *files
+            prefix += 1
+            while used_prefixes[prefix]
+                prefix += 1
 
-        -- bookkeeping (needed for export etc)
-        import_metadata = {prefix: prefix, file: line.text, extrakeys: assfile.extradata_mapping,
-                           script_info: assfile.script_info,
-                           aegisub_garbage: assfile.aegisub_garbage}
-
-        -- increment layer if specified
-        for event_line in *assfile.events
-            event_line.layer += line.layer
-
-        if line.effect == "import-shifted"
-            -- find sync line in external file and shift lines to match the import line
-            sync_line = F.list.find assfile.events, (x)-> x.effect == "sync"
-            if not sync_line
-                aegisub.log 0, "FATAL: Couldn't find sync line in #{file_path}\n"
+            -- parse file to import
+            file_path = path.join script_path, import_file
+            file = io.open file_path
+            if not file
+                aegisub.log 0, "FATAL: Could not find #{file_path}\n"
                 return nil
 
-            import_metadata.sync_line = sync_line.start_time
+            assfile = parser.parse_file file
+            file\close!
 
-            start_diff = sync_line.start_time - line.start_time
+            -- bookkeeping (needed for export etc)
+            file_metadata = {prefix: prefix, file: import_file, extrakeys: assfile.extradata_mapping,
+                             script_info: assfile.script_info,
+                             aegisub_garbage: assfile.aegisub_garbage}
+
+            -- increment layer if specified
             for event_line in *assfile.events
-                event_line.start_time -= start_diff
-                event_line.end_time -= start_diff
+                event_line.layer += line.layer
 
-        table.insert imports, {:prefix, import_line: i, :assfile, :import_metadata,
-                               file_name: line.text}
+            if line.effect == "import-shifted"
+                -- find sync line in external file and shift lines to match the import line
+                sync_line = F.list.find assfile.events, (x)-> x.effect == "sync"
+                if not sync_line
+                    aegisub.log 0, "FATAL: Couldn't find sync line in #{file_path}\n"
+                    return nil
+
+                file_metadata.sync_line = sync_line.start_time
+
+                start_diff = sync_line.start_time - line.start_time
+                for event_line in *assfile.events
+                    event_line.start_time -= start_diff
+                    event_line.end_time -= start_diff
+
+            table.insert imported_files, {:prefix, :assfile, file_name: import_file}
+            table.insert import_metadata, file_metadata
+        table.insert imports, {files: imported_files, import_line: i, :import_metadata}
 
     return imports
 
@@ -93,12 +132,13 @@ find_conflicting_script_info = (subtitles, imports)->
 
     -- collate script properties from all imported files
     for imp in *imports
-        for field, value in pairs imp.assfile.script_info_mapping
-            if not seen_values[field]
-                continue
+        for file in *imp.files
+            for field, value in pairs file.assfile.script_info_mapping
+                if not seen_values[field]
+                    continue
 
-            seen_values[field][value] = seen_values[field][value] or {}
-            table.insert seen_values[field][value], imp.file_name
+                seen_values[field][value] = seen_values[field][value] or {}
+                table.insert seen_values[field][value], file.file_name
 
     current_script_info = {}
     for i, line in ipairs subtitles
@@ -163,18 +203,19 @@ add_imports = (subtitles, imports)->
         import_line.extra[script_namespace] = json.encode imp.import_metadata
         subtitles[import_line_pos] = import_line
 
-        for style in *imp.assfile.styles
-            style.name = "#{imp.prefix}$" .. style.name
-            -- insert style before the first dialogue line
-            subtitles.insert first_dialogue + style_offset, style
-            offset += 1
-            style_offset += 1
+        for file in *imp.files
+            for style in *file.assfile.styles
+                style.name = "#{file.prefix}$" .. style.name
+                -- insert style before the first dialogue line
+                subtitles.insert first_dialogue + style_offset, style
+                offset += 1
+                style_offset += 1
 
-        for event in *imp.assfile.events
-            event.style = "#{imp.prefix}$" .. event.style
-            -- insert line below the imp definition
-            subtitles.insert imp.import_line + offset + 1, event
-            offset += 1
+            for event in *file.assfile.events
+                event.style = "#{file.prefix}$" .. event.style
+                -- insert line below the imp definition
+                subtitles.insert imp.import_line + offset + 1, event
+                offset += 1
 
 merge = (subtitles, selected_lines)->
     imports = process_imports subtitles, selected_lines
@@ -192,9 +233,27 @@ merge = (subtitles, selected_lines)->
     return true
 
 
+find_import_definitions = (subtitles, predicate=->true)->
+    import_lines = {}
+    for i, line in ipairs subtitles
+        if line.class == "dialogue" and
+                (line.effect == "import" or line.effect == "import-shifted") and
+                predicate line
+            table.insert import_lines, i
+    return import_lines
+
+
 clear_merged = (subtitles, selected_lines)->
     prefixes_to_clear = {}
     selected_lines = selected_lines or [i for i, line in ipairs subtitles]
+
+    prefix_groups = {}
+    for import_line in *find_import_definitions subtitles
+        data = get_data subtitles[import_line]
+        if data
+            prefixes = [file.prefix for file in *data]
+            for prefix in *prefixes
+                prefix_groups[prefix] = prefixes
 
     -- determine what files to remove based on selection
     for i in *selected_lines
@@ -204,12 +263,14 @@ clear_merged = (subtitles, selected_lines)->
 
         data = get_data line
         if data
-            prefixes_to_clear[data.prefix] = true
+            for file in *data
+                prefixes_to_clear[file.prefix] = true
             continue
 
         {prefix, style} = F.string.split line.style, "$", 1, true, 1
         if style and tonumber(prefix) != nil
-            prefixes_to_clear[tonumber prefix] = true
+            for pref in *prefix_groups[tonumber prefix]
+                prefixes_to_clear[pref] = true
 
     -- delete lines corresponding to the namespaces to remove
     lines_to_delete = {}
@@ -222,7 +283,7 @@ clear_merged = (subtitles, selected_lines)->
         elseif line.class == "dialogue"
             -- clear extradata on import lines but don't remove them
             data = get_data line
-            if data and prefixes_to_clear[data.prefix]
+            if data and prefixes_to_clear[data[1].prefix]
                 line.extra[script_namespace] = nil
                 subtitles[i] = line
                 continue
@@ -233,15 +294,6 @@ clear_merged = (subtitles, selected_lines)->
                 table.insert lines_to_delete, i
 
     subtitles.delete lines_to_delete
-
-find_import_definitions = (subtitles, predicate=->true)->
-    import_lines = {}
-    for i, line in ipairs subtitles
-        if line.class == "dialogue" and
-                (line.effect == "import" or line.effect == "import-shifted") and
-                predicate line
-            table.insert import_lines, i
-    return import_lines
 
 import_gui = (subtitles, selected_lines, active_line)->
     dialog = {
@@ -312,7 +364,8 @@ generate_release = (subtitles, selected_lines, active_line)->
         -- find the source files for each namespace for error reporting
         data = get_data line
         if data
-            files[data.prefix] = line.text
+            for file in *data
+                files[file.prefix] = file.file
             continue
 
         -- don't include comments or empty lines
@@ -443,28 +496,29 @@ export_changes = (subtitles, selected_lines, active_line)->
         if not data
             continue
 
-        imported_lines = lines[data.prefix] or {style: {}, dialogue: {}}
+        for file in *data
+            imported_lines = lines[file.prefix] or {style: {}, dialogue: {}}
 
-        -- decrement layers back to original layer
-        for line in *imported_lines.dialogue
-            line.layer = math.max(line.layer - imp.layer, 0)
-
-        -- shift back timings for import-shifted lines
-        if data.sync_line
-            sync_diff = imp.start_time - data.sync_line
+            -- decrement layers back to original layer
             for line in *imported_lines.dialogue
-                line.start_time = math.max(line.start_time - sync_diff, 0)
-                line.end_time = math.max(line.end_time - sync_diff, 0)
+                line.layer = math.max(line.layer - imp.layer, 0)
 
-        file_path = path.join script_path, data.file
-        outputs[file_path] = {script_info: data.script_info, aegisub_garbage: data.aegisub_garbage,
-                              lines: imported_lines, extra: data.extrakeys}
+            -- shift back timings for import-shifted lines
+            if file.sync_line
+                sync_diff = imp.start_time - file.sync_line
+                for line in *imported_lines.dialogue
+                    line.start_time = math.max(line.start_time - sync_diff, 0)
+                    line.end_time = math.max(line.end_time - sync_diff, 0)
 
-        table.insert dialog, {
-            class: "checkbox", label: data.file, x: 0, y: y, hint: file_path,
-            name: file_path, value: true
-        }
-        y += 1
+            file_path = path.join script_path, file.file
+            outputs[file_path] = {script_info: file.script_info, aegisub_garbage: file.aegisub_garbage,
+                                  lines: imported_lines, extra: file.extrakeys}
+
+            table.insert dialog, {
+                class: "checkbox", label: file.file, x: 0, y: y, hint: file_path,
+                name: file_path, value: true
+            }
+            y += 1
 
     button, result = aegisub.dialog.display dialog
     if not button
@@ -485,28 +539,6 @@ export_changes = (subtitles, selected_lines, active_line)->
 
 script_is_saved = (subtitles, selected_lines, active_line)->
     aegisub.decode_path("?script") != "?script"
-
-relpath = (f, script_path)->
-    rpath = path.relpath f, script_path
-
-    if not path.is_windows
-        return rpath
-
-    -- recover original capitalization by replacing the end of
-    -- the case normalized path with the corresponding part from the
-    -- original f
-    f = path.normpath f
-    local k
-    k = 0
-    for i=1,math.min(#f, #rpath)
-        ri = #rpath - i + 1
-        fi = #f - i + 1
-        if rpath\sub(ri, ri) != f\sub(fi, fi)\lower!
-            break
-        k = i
-
-    rpath = (rpath\sub 1, #rpath - k) .. (f\sub #f - k + 1, #f)
-    return rpath\gsub '\\', '/'
 
 
 include_file = (subtitles, effect)->

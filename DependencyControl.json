@@ -18,14 +18,14 @@
       "description": "Provides advanced script merging, mainly for use during QC.",
       "channels": {
         "release": {
-          "version": "0.0.12",
-          "released": "2019-11-24",
+          "version": "0.0.13",
+          "released": "2020-07-15",
           "default": true,
           "files": [
             {
               "name": ".moon",
               "url": "@{fileBaseUrl}@{fileName}",
-              "sha1": "B0178306E2396F0D56C8060027450D02FB52DBE1"
+              "sha1": "63A5B19869AE9D656F258A0A11A9F4714941EB30"
             }
           ],
           "requiredModules": [
@@ -92,6 +92,12 @@
         ],
         "0.0.12": [
           "When writing ASS files, generate and output one line at a time to avoid memory issues"
+        ],
+        "0.0.13": [
+          "Add wildcard support for import definitions",
+          "Add support for selectively exporting changes to only specified files",
+          "Make it possible to export changes even if the target file does not exist",
+          "When exporting, resolve the paths of target files using the current location of the template rather than the location when the files were originally imported"
         ]
       }
     }

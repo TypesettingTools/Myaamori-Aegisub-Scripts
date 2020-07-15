@@ -29,6 +29,9 @@ This script contains import definitions for three files: `shoujo kageki 03.ass`,
 In order to actually import the files, we use the **Import all external files** option.
 This will read the files specified in the import definitions and add their styles and dialogue lines to the current script.
 
+You can also use **wildcards** to specify groups of files, e.g. `signs*.ass`.
+Files imported in this manner will generally be treated as one single large file as far as Merge Scripts is concerned.
+
 ![after import](https://raw.githubusercontent.com/TypesettingTools/Myaamori-Aegisub-Scripts/master/assets/ms_postimport.png)
 
 Every style will be prefixed with an identifier to keep track of what file the line came from.

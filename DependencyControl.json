@@ -100,6 +100,41 @@
           "When exporting, resolve the paths of target files using the current location of the template rather than the location when the files were originally imported"
         ]
       }
+    },
+    "myaa.PasteFromPad": {
+      "url": "@{baseUrl}#@{namespace}",
+      "fileBaseUrl": "@{fileBaseUrl}/@{namespace}-v@{version}/macros/@{namespace}",
+      "author": "Myaamori",
+      "name": "Paste From Pad",
+      "description": "Paste text from pad over existing lines.",
+      "channels": {
+        "release": {
+          "version": "0.0.1",
+          "released": "2020-07-16",
+          "default": true,
+          "files": [
+            {
+              "name": ".moon",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "F62DA290D29F600CD54607DB6758D171742E7012"
+            }
+          ],
+          "requiredModules": [
+            {
+              "moduleName": "l0.Functional",
+              "name": "(Almost) Functional Suite",
+              "url": "https://github.com/TypesettingTools/ASSFoundation",
+              "version": "0.6.0",
+              "feed": "@{feed:Functional}"
+            }
+          ]
+        }
+      },
+      "changelog": {
+        "0.0.1": [
+          "Initial release"
+        ]
+      }
     }
   },
   "modules": {

@@ -109,14 +109,14 @@
       "description": "Paste text from pad over existing lines.",
       "channels": {
         "release": {
-          "version": "0.0.1",
+          "version": "0.0.2",
           "released": "2020-07-16",
           "default": true,
           "files": [
             {
               "name": ".moon",
               "url": "@{fileBaseUrl}@{fileName}",
-              "sha1": "F62DA290D29F600CD54607DB6758D171742E7012"
+              "sha1": "881F9E23BE73CBD861CEBF9D3B0634734FEB9DCD"
             }
           ],
           "requiredModules": [
@@ -133,6 +133,9 @@
       "changelog": {
         "0.0.1": [
           "Initial release"
+        ],
+        "0.0.2": [
+          "Create new lines when going beyond the existing number of lines"
         ]
       }
     }

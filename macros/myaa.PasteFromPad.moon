@@ -1,7 +1,7 @@
 
 export script_name = "Paste From Pad"
 export script_description = "Paste text from pad over existing lines"
-export script_version = "0.0.1"
+export script_version = "0.0.2"
 export script_author = "Myaamori"
 export script_namespace = "myaa.PasteFromPad"
 

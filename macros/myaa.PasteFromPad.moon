@@ -84,15 +84,18 @@ paste = (subtitles, selected_lines, active_line)->
         if #text == 0
             comment = true
 
-        line = subtitles[active_line]
-        line.actor = actor
-        line.text = text
-        line.comment = comment
-        subtitles[active_line] = line
+        if active_line <= #subtitles
+            line = subtitles[active_line]
+            line.actor = actor
+            line.text = text
+            line.comment = comment
+            subtitles[active_line] = line
+        else
+            subtitles[0] = {class: "dialogue", :actor, :text, :comment,
+                            layer: 0, start_time: 0, end_time: 0, style: "Default",
+                            margin_l: 0, margin_r: 0, margin_t: 0, effect: ""}
 
         active_line += 1
-        if active_line > #subtitles
-            return nil
 
 copy = (subtitles, selected_lines)->
     dialog = {

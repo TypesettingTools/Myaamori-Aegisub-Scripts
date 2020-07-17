@@ -3,6 +3,7 @@
 1. [Merge Scripts: Bidirectional script merging](#merge-scripts)
 2. [Sub Digest: Processing ASS files from the CLI](#sub-digest)
 3. [ASSParser: Parsing ASS files from automations](#assparser)
+4. [Paste From Pad: Paste pad contents over existing lines](#paste-from-pad)
 
 ## Merge Scripts
 
@@ -500,3 +501,23 @@ Arguments:
 * **events**: A list of dialogue lines passed to `generate_events_section`.
 * **extradata_mapping**: A mapping from extradata key/value pairs to IDs, passed to `generate_events_section`.
 * **callback**: A callback accepting one string argument, namely one line to output.
+
+## Paste From Pad
+
+Allows you to paste dialogue lines with annotated actors over existing, already-timed lines.
+Think of it as a combination of Aegisub's text import and paste lines over (Shift+Ctrl+V) features.
+
+The **Paste over from pad** option allows you to paste text in `Actor: Text` format, after which the contents of the existing lines will be replaced with the pasted text.
+All line properties other than `Actor`, `Text` and `Comment` will be left untouched.
+If the pasted content contains more lines than exist in the script already, new lines will be inserted, so you can also use this script as a substitute for Aegisub's built-in text import.
+
+![paste](https://raw.githubusercontent.com/TypesettingTools/Myaamori-Aegisub-Scripts/master/assets/pfp_paste.png)
+
+![paste result](https://raw.githubusercontent.com/TypesettingTools/Myaamori-Aegisub-Scripts/master/assets/pfp_paste_result.png)
+
+Using **Copy to pad** you can do the inverse: The selected lines will be converted to `Actor: Text` format, and can then be copied back to the pad or used for diffing.
+
+![copy](https://raw.githubusercontent.com/TypesettingTools/Myaamori-Aegisub-Scripts/master/assets/pfp_copy.png)
+
+![copy result](https://raw.githubusercontent.com/TypesettingTools/Myaamori-Aegisub-Scripts/master/assets/pfp_copy_result.png)
+

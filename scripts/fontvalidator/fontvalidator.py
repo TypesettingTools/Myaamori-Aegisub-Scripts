@@ -4,8 +4,8 @@ import collections
 import io
 import itertools
 import logging
-import os
 import os.path
+import pathlib
 import re
 import sys
 import zlib
@@ -155,11 +155,11 @@ class Font:
 class FontCollection:
     def __init__(self, fontfiles):
         self.fonts = []
-        for f in fontfiles:
+        for name, f in fontfiles:
             try:
                 self.fonts.append(Font(f))
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"Error reading {name}: {e}")
 
         self.cache = {}
         self.by_full = {name.lower(): font
@@ -381,7 +381,8 @@ def get_fonts(mkv):
                 if attachment["FileMimeType"].value not in FONT_MIMETYPES:
                     print(f"Ignoring non-font attachment {attachment['FileName'].value}")
 
-                fonts.append(io.BytesIO(attachment["FileData"].value))
+                fonts.append((attachment["FileName"].value,
+                              io.BytesIO(attachment["FileData"].value)))
 
     return fonts
 
@@ -416,14 +417,14 @@ May be a Matroska file with fonts attached, a directory containing font files, o
         fontlist = []
 
     for additional_fonts in args.additional_fonts:
-        if os.path.isdir(additional_fonts):
-            with os.scandir(additional_fonts) as files:
-                fontlist.extend(f.path for f in files)
+        path = pathlib.Path(additional_fonts)
+        if path.is_dir():
+            fontlist.extend((p.name, str(p)) for p in path.iterdir() if p.is_file())
         elif is_mkv(additional_fonts):
             fontmkv = schema.load(additional_fonts)
             fontlist.extend(get_fonts(fontmkv))
         else:
-            fontlist.append(additional_fonts)
+            fontlist.append((path.name, additional_fonts))
 
     issues = False
     fonts = FontCollection(fontlist)

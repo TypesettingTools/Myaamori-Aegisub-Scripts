@@ -590,7 +590,7 @@ To solve it, simply include the missing font.
 
 This can also happen if you specified the name of a font incorrectly in a style definition or in an argument to an `\fn` tag.
 libass supports using family names and full names for TrueType fonts, and family names and the PostScript name for OpenType fonts.
-Use a tool such as `fc-scan` or `Font Info > PS/TTF Names` to list the available names for a font, and ensure that you are using a valid name in the script.
+Use a tool such as `fc-scan` or `Font Info > PS/TTF Names` in FontForge to list the available names for a font, and ensure that you are using a valid name in the script.
 
 #### Missing glyphs
 

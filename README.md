@@ -4,6 +4,7 @@
 2. [Sub Digest: Processing ASS files from the CLI](#sub-digest)
 3. [ASSParser: Parsing ASS files from automations](#assparser)
 4. [Paste From Pad: Paste pad contents over existing lines](#paste-from-pad)
+5. [Font Validator: Scan for common font-related issues in a muxed MKV](#font-validator)
 
 ## Merge Scripts
 
@@ -106,11 +107,11 @@ It is highly recommended to familiarize yourself with python-ass first before ma
 Install Sub Digest with pip:
 
 ```
-pip install git+https://github.com/TypesettingTools/Myaamori-Aegisub-Scripts/#subdirectory=scripts/sub-digest
+pip install --user git+https://github.com/TypesettingTools/Myaamori-Aegisub-Scripts/#subdirectory=scripts/sub-digest
 ```
 
 This will add a `subdigest` executable along with the `subdigest.py` Python module.
-If the executable is not in your path, you can run Sub Digest as `python -m subdigest --help`.
+If the executable is not in your path, you can run Sub Digest as `python -m subdigest --help`, or alternatively `py -3 -m subdigest --help` on Windows.
 
 ### Workflow
 
@@ -521,3 +522,110 @@ Using **Copy to pad** you can do the inverse: The selected lines will be convert
 
 ![copy result](https://raw.githubusercontent.com/TypesettingTools/Myaamori-Aegisub-Scripts/master/assets/pfp_copy_result.png)
 
+## Font Validator
+
+### Overview
+
+Scans a muxed MKV file for issues such as missing fonts, missing glyphs and use of faux bold/italic.
+
+```
+$ fontvalidator --help
+usage: fontvalidator [-h] [--ignore-drawings]
+                     subtitles [additional_fonts [additional_fonts ...]]
+
+Validate font usage in a muxed Matroska file or an ASS file.
+
+positional arguments:
+  subtitles          File containing the subtitles to verify. May be a Matroska file or an
+                     ASS file. If a Matroska file is provided, any attached fonts will be
+                     used.
+  additional_fonts   List of additional fonts to use for verification. May be a Matroska
+                     file with fonts attached, a directory containing font files, or a
+                     single font file.
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --ignore-drawings  Don't warn about missing fonts only used for drawings.
+
+$ fontvalidator video.mkv
+Validating track English
+- Could not find font Arial on line(s): 2036 2037 2038 2039 2040 2065 2074 2075 2084 2085 2086 2087 2138 2139 2140 2141 2142 2143 2144 2145 2146 2147 2148 2149 2150 2151 2152 2153 2154 2155 2156 2157 2158 2159 2160 2161 2162 2163 2164 2165 2166 2167 2168 2169 2170 2171 2172 2173 2174 2175 2176 2177 2178 2210 2211 2212 2213 2214 2215
+- Could not find font SF Pro Display Light on line(s): 1925 1926 1927 1928 1929
+- Requested weight 400 but got 700 for font Avenir LT Std 55 Roman on line(s): 1930 1931 1932 1933 1934 1935 1936
+- Font DK nouveau crayon is missing glyphs ンゴちゃん on line(s): 1104
+- Font Sazanami Mincho is missing glyphs ὦ on line(s): 911
+5 issue(s) found
+```
+
+You can also run Font Validator directly on an ASS file and provide a muxed MKV to read fonts from as an additional argument.
+This is useful for making the line numbers more accurate, as comments will be moved to the top of the script when muxing.
+
+```
+$ fontvalidator script.ass video.mkv
+```
+
+Alternatively, you can provide a list of directories containing fonts, or individual font files.
+
+### Installation
+
+Install Font Validator with pip:
+
+```
+pip install --user git+https://github.com/TypesettingTools/Myaamori-Aegisub-Scripts/#subdirectory=scripts/fontvalidator
+```
+
+This will add a `fontvalidator` executable along with the `fontvalidator.py` Python module.
+If the executable is not in your path, you can run Sub Digest as `python -m fontvalidator --help`, or alternatively `py -3 -m fontvalidator --help` on Windows.
+
+### Common issues and how to fix them
+
+#### Missing fonts
+
+```
+Could not find font [...] on line(s): [...]
+```
+
+In most cases this means you forgot to include a font when muxing.
+To solve it, simply include the missing font.
+
+This can also happen if you specified the name of a font incorrectly in a style definition or in an argument to an `\fn` tag.
+libass supports using family names and full names for TrueType fonts, and family names and the PostScript name for OpenType fonts.
+Use a tool such as `fc-scan` or `Font Info > PS/TTF Names` to list the available names for a font, and ensure that you are using a valid name in the script.
+
+#### Missing glyphs
+
+```
+Font [...] is missing glyphs [...] on line(s): [...]
+```
+
+This happens when you are using characters not supported by the current font.
+This will cause the renderer to use a fallback font, or simply fail to render the characters completely.
+To solve this, either ensure you are only using supported characters, or switch to another font that does support the characters in question.
+
+#### Faux bold/italic
+
+```
+Faux bold used for font [...] (requested weight 700, got 400) on line(s): [...]
+Faux italic used for font [...] on line(s): [...]
+```
+
+This happens when you have requested a bold or italic font but only a non-bold/non-italic font from the same family is available.
+This will cause the renderer to use faux bold/italic, where it emulates bold/italic by simply making the base font thicker/slant.
+
+This is not necessarily an issue, but it is generally preferable to use a true bold/italic font if one is available for the font family in question, as it will generally look better.
+Additionally, if you do not mux the true bold/italic font, the result may end up looking slightly different if the user playing the file has it installed.
+
+Another reason you may see this warning is if you are using a very thin font, e.g. one with weight 100.
+Since non-bold (`\b0`) corresponds to weight 400 in ASS, the renderer will still apply faux bold even if you did not explicitly request a bold font.
+To avoid this, explicitly specify the exact weight of the font you want to use, e.g. `\b100`.
+
+#### Mismatched weight/slant
+
+```
+Requested weight 400 but got 700 for font [...] on line(s): [...]
+Requested non-italic but got italic for font [...] on line(s): [...]
+```
+
+This happens when you requested e.g. a non-bold font, but only a bold version was available.
+This generally does not affect the rendering of the font, but if the user has a better-matching font installed, they may end up with a different result.
+To avoid this, simply specify the font style explicitly, by including e.g. `\b1` (or `\bX` where X is the weight of the font) for bold fonts or `\i1` for italic fonts.

@@ -183,11 +183,11 @@ class FontCollection:
 
     def _match(self, state):
         if (exact := self.by_full.get(state.font)):
-            return exact
+            return exact, True
         elif (family := self.by_family.get(state.font)):
-            return min(family, key=lambda font: self.similarity(state, font))
+            return min(family, key=lambda font: self.similarity(state, font)), False
         else:
-            return None
+            return None, False
 
     def match(self, state):
         s = state._replace(font=state.font.lower(), drawing=False)
@@ -199,7 +199,7 @@ class FontCollection:
             return font
 
 
-def validate_fonts(doc, fonts, ignore_drawings=False):
+def validate_fonts(doc, fonts, ignore_drawings=False, warn_on_exact=False):
     report = {
         "missing_font": collections.defaultdict(set),
         "missing_glyphs": collections.defaultdict(set),
@@ -224,7 +224,7 @@ def validate_fonts(doc, fonts, ignore_drawings=False):
             style = State("Arial", False, 400, False)
 
         for state, text in parse_line(line.text, style, styles):
-            font = fonts.match(state)
+            font, exact_match = fonts.match(state)
 
             if font is None:
                 if not (ignore_drawings and state.drawing):
@@ -234,13 +234,13 @@ def validate_fonts(doc, fonts, ignore_drawings=False):
             if state.weight >= font.weight + 150:
                 report["faux_bold"][state.font, state.weight, font.weight].add(nline)
 
-            if state.weight <= font.weight - 150:
+            if state.weight <= font.weight - 150 and (not exact_match or warn_on_exact):
                 report["mismatch_bold"][state.font, state.weight, font.weight].add(nline)
 
             if state.italic and not font.italic:
                 report["faux_italic"][state.font].add(nline)
 
-            if not state.italic and font.italic:
+            if not state.italic and font.italic and (not exact_match or warn_on_exact):
                 report["mismatch_italic"][state.font].add(nline)
 
             if not state.drawing:
@@ -408,6 +408,8 @@ May be a Matroska file with fonts attached, a directory containing font files, o
 """)
     parser.add_argument('--ignore-drawings', action='store_true', default=False,
                         help="Don't warn about missing fonts only used for drawings.")
+    parser.add_argument('--warn-fullname-mismatch', action='store_true', default=False,
+                        help="Warn about mismatched styles even when using the full font name.")
     args = parser.parse_args()
 
     schema = ebmlite.loadSchema("matroska.xml")
@@ -435,7 +437,7 @@ May be a Matroska file with fonts attached, a directory containing font files, o
     fonts = FontCollection(fontlist)
     for name, doc in subtitles:
         print(f"Validating track {name}")
-        issues = issues or validate_fonts(doc, fonts, args.ignore_drawings)
+        issues = issues or validate_fonts(doc, fonts, args.ignore_drawings, args.warn_fullname_mismatch)
 
     return issues
 

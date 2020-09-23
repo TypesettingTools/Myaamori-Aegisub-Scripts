@@ -226,9 +226,11 @@ def validate_fonts(doc, fonts, ignore_drawings=False, warn_on_exact=False):
         for state, text in parse_line(line.text, style, styles):
             font, exact_match = fonts.match(state)
 
+            if ignore_drawings and state.drawing:
+                continue
+
             if font is None:
-                if not (ignore_drawings and state.drawing):
-                    report["missing_font"][state.font].add(nline)
+                report["missing_font"][state.font].add(nline)
                 continue
 
             if state.weight >= font.weight + 150:

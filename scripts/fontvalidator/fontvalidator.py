@@ -136,7 +136,7 @@ class Font:
                     if ord(c) not in uniTable]
         elif (symbolTable := self.font["cmap"].getcmap(3, 0)):
             macTable = self.font["cmap"].getcmap(1, 0)
-            encoding = encodingTools.getEncoding(1, 0, macTable.language)
+            encoding = encodingTools.getEncoding(1, 0, macTable.language) if macTable else 'mac_roman'
             missing = []
             for c in text:
                 try:

@@ -95,9 +95,10 @@ def parse_line(line, line_style, styles):
 
 
 class Font:
-    def __init__(self, fontfile):
+    def __init__(self, fontfile, font_number=0):
         self.fontfile = fontfile
-        self.font = ttFont.TTFont(fontfile)
+        self.font = ttFont.TTFont(fontfile, fontNumber=font_number)
+        self.num_fonts = getattr(self.font.reader, "numFonts", 1)
         self.postscript = self.font.has_key("CFF ")
         self.glyphs = self.font.getGlyphSet()
 
@@ -157,7 +158,11 @@ class FontCollection:
         self.fonts = []
         for name, f in fontfiles:
             try:
-                self.fonts.append(Font(f))
+                font = Font(f)
+                self.fonts.append(font)
+                if font.num_fonts > 1:
+                    for i in range(1, font.num_fonts):
+                        self.fonts.append(Font(f, font_number=i))
             except Exception as e:
                 print(f"Error reading {name}: {e}")
 

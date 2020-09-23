@@ -55,14 +55,14 @@ def parse_tags(s, state, line_style, styles):
             state = state._replace(font=font)
         elif (args := get_tag("b", "blur", "be", "bord")) is not None:
             weight = None if len(args) == 0 else parse_int(args[0])
-            if weight == 0:
+            if weight is None:
+                transformed = None
+            elif weight == 0:
                 transformed = 400
             elif weight in (1, -1):
                 transformed = 700
             elif 100 <= weight <= 900:
                 transformed = weight
-            else:
-                transformed = None
 
             state = state._replace(weight=transformed or line_style.weight)
         elif (args := get_tag("i", "iclip")) is not None:

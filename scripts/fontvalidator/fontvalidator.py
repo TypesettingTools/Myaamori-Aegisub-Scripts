@@ -63,6 +63,8 @@ def parse_tags(s, state, line_style, styles):
                 transformed = 700
             elif 100 <= weight <= 900:
                 transformed = weight
+            else:
+                transformed = None
 
             state = state._replace(weight=transformed or line_style.weight)
         elif (args := get_tag("i", "iclip")) is not None:

@@ -59,7 +59,7 @@ def parse_tags(s, state, line_style, styles):
                 transformed = 400
             elif weight in (1, -1):
                 transformed = 700
-            elif 100 <= transformed <= 900:
+            elif 100 <= weight <= 900:
                 transformed = weight
             else:
                 transformed = None

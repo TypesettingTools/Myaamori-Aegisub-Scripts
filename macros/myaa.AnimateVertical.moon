@@ -47,9 +47,8 @@ process = (sub, sel, result) ->
     lines_added = 0
 
     lines\runCallback ((lines, line, i) ->
-        lines_added -= 1
-        table.insert lines_to_delete, line
         ass = ASS\parse line
+        line\getPropertiesFromStyle!
 
         str = ass\copy!\stripTags!\getString!
 
@@ -73,6 +72,7 @@ process = (sub, sel, result) ->
                 start_frame = aegisub.frame_from_ms charline.start_time
                 end_frame = aegisub.frame_from_ms charline.end_time
                 duration = end_frame - start_frame
+                charline\tokenizeTransforms!
 
                 for frame = start_frame, end_frame - 1
                     n = frame - start_frame
@@ -82,6 +82,7 @@ process = (sub, sel, result) ->
                     copy = Line charline, lines
                     copy.start_time = aegisub.ms_from_frame frame
                     copy.end_time = aegisub.ms_from_frame (frame + 1)
+                    copy\interpolateTransforms cur_time
 
                     cur_shift = math.max(0, math.min((2 * anim_size - anim_stop) / (2 * anim_size),
                                                      (cur_time - delay * (j - 1)) / anim_duration))
@@ -98,9 +99,11 @@ process = (sub, sel, result) ->
 
                     lines_added += 1
                     lines\addLine copy, nil, true, line.number + lines_added
+
+        line.comment = true
     ), true
 
-    lines\deleteLines lines_to_delete
+    lines\replaceLines!
     lines\insertLines!
     return lines\getSelection!
 

@@ -36,6 +36,7 @@ process = (sub, sel, result) ->
 
     distance = result.characterDistance
     column_distance = result.columnDistance
+    offset_size = if result.spaceEven then 0 else 1
     delay = result.delay
     anim_size = result.maximumOffset
     anim_stop = result.finalOffset
@@ -58,16 +59,22 @@ process = (sub, sel, result) ->
             if i > 1
                 wordass.sections[2].value = wordass.sections[2].value\sub(2)
 
+            lwidth, lheight = 0, 0
+
             for j, charline in ipairs wordass\splitAtIntervals 1, 4, false
                 charass = charline.ASS
 
                 pos = charass\getPosition!
                 if vertical
-                    pos\add column_distance * (i - 1), distance * (j - 1)
+                    pos\add column_distance * (i - 1), distance * (j - 1) + lheight * offset_size
                 else
-                    pos\add distance * (j - 1), column_distance * (i - 1)
+                    pos\add distance * (j - 1) + lwidth * offset_size, column_distance * (i - 1)
                 charass\replaceTags {pos}
                 charass\commit!
+
+                cwidth, cheight = charass\getTextExtents!
+                lwidth += cwidth
+                lheight += cheight
 
                 start_frame = aegisub.frame_from_ms charline.start_time
                 end_frame = aegisub.frame_from_ms charline.end_time
@@ -124,68 +131,73 @@ dialog = {
       value: false, config: true,
       x: 0, y: 1,  width: 2, height: 1, hint: "Inverts the direction of the animation"
     },
+    spaceEven: {
+      class: "checkbox", label: "Space out characters evenly",
+      value: true, config: true,
+      x: 0, y: 3,  width: 2, height: 1, hint: "Spaces out characters evenly, ignoring their width/height; if false, characters are additionally offset by their height (vertical layout) or their width (horizontal layout)"
+    },
     characterDistanceLabel: {
       class: "label", label: "Character distance:",
-      x: 0, y: 2,  width: 1, height: 1
+      x: 0, y: 4,  width: 1, height: 1
     },
     characterDistance: {
       class: "intedit",
       value: 40, config: true,
-      x: 1, y: 2, width: 1, height: 1, hint: "Distance between characters on the same row/column (pixels)"
+      x: 1, y: 4, width: 1, height: 1, hint: "Distance between characters on the same row/column (pixels)"
     },
     columnDistanceLabel: {
       class: "label", label: "Column/row distance:",
-      x: 0, y: 3,  width: 1, height: 1
+      x: 0, y: 5,  width: 1, height: 1
     },
     columnDistance: {
       class: "intedit",
       value: 100, config: true,
-      x: 1, y: 3, width: 1, height: 1, hint: "Distance between rows/columns of characters (pixels)"
+      x: 1, y: 5, width: 1, height: 1, hint: "Distance between rows/columns of characters (pixels)"
     },
     maximumOffsetLabel: {
       class: "label", label: "Maximum offset:",
-      x: 0, y: 4,  width: 1, height: 1
+      x: 0, y: 6,  width: 1, height: 1
     },
     maximumOffset: {
       class: "intedit",
       value: 100, config: true, min: 0,
-      x: 1, y: 4, width: 1, height: 1, hint: "The maximum offset (peak) of the animation (pixels)"
+      x: 1, y: 6, width: 1, height: 1, hint: "The maximum offset (peak) of the animation (pixels)"
     },
     finalOffsetLabel: {
       class: "label", label: "Final offset:",
-      x: 0, y: 5,  width: 1, height: 1
+      x: 0, y: 7,  width: 1, height: 1
     },
     finalOffset: {
       class: "intedit",
       value: 30, config: true, min: 0,
-      x: 1, y: 5, width: 1, height: 1, hint: "The final offset at the end of the animation (pixels)"
+      x: 1, y: 7, width: 1, height: 1, hint: "The final offset at the end of the animation (pixels)"
     },
     durationLabel: {
       class: "label", label: "Animation duration:",
-      x: 0, y: 6,  width: 1, height: 1
+      x: 0, y: 8,  width: 1, height: 1
     },
     duration: {
       class: "intedit",
       value: 200, config: true, min: 10,
-      x: 1, y: 6, width: 1, height: 1, hint: "The duration of the animation per character (ms)"
+      x: 1, y: 8, width: 1, height: 1, hint: "The duration of the animation per character (ms)"
     },
     delayLabel: {
       class: "label", label: "Animation delay:",
-      x: 0, y: 7,  width: 1, height: 1
+      x: 0, y: 9,  width: 1, height: 1
     },
     delay: {
       class: "intedit",
-      value: 100, config: true, min: 0,
-      x: 1, y: 7, width: 1, height: 1, hint: "The delay between the start of the animation for different characters (ms)"
+      value: 100, config: true,
+      x: 1, y: 9, width: 1, height: 1, hint: "The delay between the start of the animation for different characters (ms)"
     },
     splitLabel: {
       class: "label", label: "Split character:",
-      x: 0, y: 8,  width: 1, height: 1
+      x: 0, y: 10,  width: 1, height: 1
     },
     split: {
       class: "edit",
       value: "|", config: true,
-      x: 1, y: 8, width: 1, height: 1, hint: "The character to split the text into multiple rows/columns at"
+      x: 1, y: 10, width: 1, height: 1, hint: "The character to split the text into multiple rows/columns at"
     }
   }
 }

@@ -1,9 +1,9 @@
 
-export script_name = "Animate Vertical"
-export script_description = "Animate a vertical line"
-export script_version = "0.0.1"
+export script_name = "Bounce"
+export script_description = "Make text bounce"
+export script_version = "0.0.2"
 export script_author = "Myaamori"
-export script_namespace = "myaa.AnimateVertical"
+export script_namespace = "myaa.Bounce"
 
 DependencyControl = require 'l0.DependencyControl'
 depctrl = DependencyControl {
@@ -221,5 +221,5 @@ show_dialog = (sub, sel) ->
         return process sub, sel, result
 
 depctrl\registerMacros {
-    {"Animate", "", show_dialog}
+    {"Make bouncy", "", show_dialog}
 }

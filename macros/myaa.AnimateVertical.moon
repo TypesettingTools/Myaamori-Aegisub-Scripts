@@ -44,6 +44,7 @@ process = (sub, sel, result) ->
     vertical = result.layout == "Vertical"
     direction = if result.invertDirection then -1 else 1
     split_char = result.split
+    hide_char = result.hideCharacters
 
     lines_added = 0
 
@@ -93,19 +94,21 @@ process = (sub, sel, result) ->
 
                     cur_shift = math.max(0, math.min((2 * anim_size - anim_stop) / (2 * anim_size),
                                                      (cur_time - delay * (j - 1)) / anim_duration))
-                    copyass = ASS\parse copy
-                    pos = copyass\getPosition!
 
-                    shift = direction * math.sin(cur_shift * math.pi) * anim_size
-                    if vertical
-                        pos\add shift, 0
-                    else
-                        pos\add 0, shift
-                    copyass\replaceTags {pos}
-                    copyass\commit!
+                    if not hide_char or cur_shift > 0
+                        copyass = ASS\parse copy
+                        pos = copyass\getPosition!
 
-                    lines_added += 1
-                    lines\addLine copy, nil, true, line.number + lines_added
+                        shift = direction * math.sin(cur_shift * math.pi) * anim_size
+                        if vertical
+                            pos\add shift, 0
+                        else
+                            pos\add 0, shift
+                        copyass\replaceTags {pos}
+                        copyass\commit!
+
+                        lines_added += 1
+                        lines\addLine copy, nil, true, line.number + lines_added
 
         line.comment = true
     ), true
@@ -130,6 +133,11 @@ dialog = {
       class: "checkbox", label: "Invert animation direction",
       value: false, config: true,
       x: 0, y: 1,  width: 2, height: 1, hint: "Inverts the direction of the animation"
+    },
+    hideCharacters: {
+      class: "checkbox", label: "Hide characters until animation starts",
+      value: false, config: true,
+      x: 0, y: 2,  width: 2, height: 1, hint: "Hides each character until the animation for that character starts"
     },
     spaceEven: {
       class: "checkbox", label: "Space out characters evenly",

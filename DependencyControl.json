@@ -101,6 +101,62 @@
         ]
       }
     },
+    "myaa.Bounce": {
+      "url": "@{baseUrl}#@{namespace}",
+      "fileBaseUrl": "@{fileBaseUrl}/@{namespace}-v@{version}/macros/@{namespace}",
+      "author": "Myaamori",
+      "name": "Bounce",
+      "description": "Make text bouncy.",
+      "channels": {
+        "release": {
+          "version": "0.0.2",
+          "released": "2020-09-25",
+          "default": true,
+          "files": [
+            {
+              "name": ".moon",
+              "url": "@{fileBaseUrl}@{fileName}",
+              "sha1": "6F8A49D0ED43BEB6C0990556C17044CC0C28FEE6"
+            }
+          ],
+          "requiredModules": [
+            {
+              "moduleName": "l0.Functional",
+              "name": "(Almost) Functional Suite",
+              "url": "https://github.com/TypesettingTools/ASSFoundation",
+              "version": "0.6.0",
+              "feed": "@{feed:Functional}"
+            },
+            {
+              "moduleName": "a-mo.Line",
+              "name": "Aegisub-Motion (Line)",
+              "url": "https://github.com/TypesettingTools/Aegisub-Motion",
+              "version": "1.5.3",
+              "feed": "https://raw.githubusercontent.com/TypesettingTools/Aegisub-Motion/DepCtrl/DependencyControl.json"
+            },
+            {
+              "moduleName": "l0.ASSFoundation",
+              "name": "ASSFoundation",
+              "url": "https://github.com/TypesettingTools/ASSFoundation",
+              "version": "0.5.0",
+              "feed": "https://raw.githubusercontent.com/TypesettingTools/ASSFoundation/master/DependencyControl.json"
+            },
+            {
+              "moduleName": "a-mo.ConfigHandler",
+              "name": "Aegisub-Motion (ConfigHandler)",
+              "url": "https://github.com/TypesettingTools/Aegisub-Motion",
+              "version": "1.1.4",
+              "feed": "https://raw.githubusercontent.com/TypesettingTools/Aegisub-Motion/DepCtrl/DependencyControl.json"
+            }
+          ]
+        }
+      },
+      "changelog": {
+        "0.0.2": [
+          "Initial release"
+        ]
+      }
+    },
     "myaa.PasteFromPad": {
       "url": "@{baseUrl}#@{namespace}",
       "fileBaseUrl": "@{fileBaseUrl}/@{namespace}-v@{version}/macros/@{namespace}",

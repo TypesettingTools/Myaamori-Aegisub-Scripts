@@ -41,7 +41,7 @@ process = (sub, sel, result) ->
     bounces = result.bounces
     bounce_size = result.bounceHeight
     anim_duration = result.charAnimDuration
-    total_duration = result.animDuration
+    delay = result.animDelay
 
     lines_added = 0
 
@@ -52,19 +52,17 @@ process = (sub, sel, result) ->
         str = ass\copy!\stripTags!\getString!
         copy = ass\copy!
 
-        end_time = line.start_time + total_duration
-        delay = ((end_time - line.start_time) - anim_duration) / (#str - 1)
+        end_time = line.start_time + delay * (#str - 1) + anim_duration
 
         for j, charline in ipairs ass\splitAtIntervals 1, 4, true
             charass = charline.ASS
 
             start_frame = aegisub.frame_from_ms charline.start_time
             end_frame = aegisub.frame_from_ms end_time
-            duration = charline.start_time - end_time
 
             pos = charass\getPosition!
 
-            for frame = start_frame, end_frame
+            for frame = start_frame, end_frame + 1
                 cur_time = aegisub.ms_from_frame(frame) - charline.start_time
 
                 p = math.max(0, math.min(1, (cur_time - delay * (j - 1)) / anim_duration))
@@ -108,14 +106,14 @@ process = (sub, sel, result) ->
 
 dialog = {
   main: {
-    animDurationLabel: {
-      class: "label", label: "Total animation duration:",
+    animDelayLabel: {
+      class: "label", label: "Animation start delay:",
       x: 0, y: 0,  width: 1, height: 1
     },
-    animDuration: {
+    animDelay: {
       class: "intedit",
-      value: 1, config: false, min: 1,
-      x: 1, y: 0, width: 1, height: 1, hint: "The total duration of the whole animation (ms)"
+      value: 20, config: true, min: 1,
+      x: 1, y: 0, width: 1, height: 1, hint: "The gap in time of the start of the animation between each character (ms)"
     },
     charAnimDurationLabel: {
       class: "label", label: "Character animation duration:",
@@ -193,7 +191,6 @@ dialog = {
 }
 
 show_dialog = (sub, sel) ->
-    dialog.main.animDuration.value = aegisub.ms_from_frame(aegisub.project_properties!.video_position + 1) - sub[sel[1]].start_time
     options = ConfigHandler dialog, depctrl.configFile, false, script_version, depctrl.configDig
     options\read!
     options\updateInterface "main"

@@ -42,6 +42,7 @@ process = (sub, sel, result) ->
     bounce_size = result.bounceHeight
     anim_duration = result.charAnimDuration
     delay = result.animDelay
+    blur_intact = result.leaveBlur
 
     lines_added = 0
 
@@ -84,11 +85,18 @@ process = (sub, sel, result) ->
                 copyass = ASS\parse copy
                 angle = ASS\createTag "angle", (1 - init_p) * start_angle + init_p * end_angle
                 alpha = ASS\createTag "alpha", (1 - init_p) * 255 + init_p * 0
-                blur = ASS\createTag "blur", (1 - init_p) * start_blur + init_p * end_blur
-                pos = copyass\getPosition!
 
+                pos = copyass\getPosition!
                 pos\add 0, -bounce_size * math.abs(math.sin(curve)) * math.pow((1 - p), accel)
-                copyass\replaceTags {pos, angle, alpha, blur}
+
+                tags = {pos, angle, alpha}
+
+                blurtags = copyass\getTags {"blur"}
+                if #blurtags == 0 or not blur_intact
+                    blur = ASS\createTag "blur", (1 - init_p) * start_blur + init_p * end_blur
+                    table.insert tags, blur
+
+                copyass\replaceTags tags
                 copyass\commit!
 
                 lines_added += 1
@@ -160,32 +168,37 @@ dialog = {
       value: 1, config: true,
       x: 1, y: 5, width: 1, height: 1, hint: "The final blur of each character"
     },
+    leaveBlur: {
+      class: "checkbox", label: "Don't overwrite blur",
+      value: true, config: true,
+      x: 0, y: 6,  width: 2, height: 1, hint: "Leaves the blur intact if already specified on the line"
+    },
     bouncesLabel: {
       class: "label", label: "Bounces:",
-      x: 0, y: 6,  width: 1, height: 1
+      x: 0, y: 7,  width: 1, height: 1
     },
     bounces: {
       class: "intedit",
       value: 2, config: true, min: 1,
-      x: 1, y: 6, width: 1, height: 1, hint: "The number of times each character should bounce"
+      x: 1, y: 7, width: 1, height: 1, hint: "The number of times each character should bounce"
     },
     bounceHeightLabel: {
       class: "label", label: "Bounce height:",
-      x: 0, y: 7,  width: 1, height: 1
+      x: 0, y: 8,  width: 1, height: 1
     },
     bounceHeight: {
       class: "intedit",
       value: 30, config: true, min: 1,
-      x: 1, y: 7, width: 1, height: 1, hint: "The height of the bounces"
+      x: 1, y: 8, width: 1, height: 1, hint: "The height of the bounces"
     },
     gravityLabel: {
       class: "label", label: "Gravity:",
-      x: 0, y: 8,  width: 1, height: 1
+      x: 0, y: 9,  width: 1, height: 1
     },
     gravity: {
       class: "floatedit",
       value: 1.2, config: true, min: 0,
-      x: 1, y: 8, width: 1, height: 1, hint: "How quickly the bounce height should decrease (1 = linear, 0 = no decrease)"
+      x: 1, y: 9, width: 1, height: 1, hint: "How quickly the bounce height should decrease (1 = linear, 0 = no decrease)"
     },
   }
 }

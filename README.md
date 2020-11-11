@@ -102,6 +102,129 @@ However, most of its power comes from the use of *selections*, which make it pos
 Sub Digest makes use of [python-ass](https://github.com/chireiden/python-ass), and inherits many of its conventions, including field names.
 It is highly recommended to familiarize yourself with python-ass first before making use of Sub Digest.
 
+```
+$ subdigest --help
+usage: subdigest [-h] [--fps FPS] [--get-field FIELD] [--keep-selected]
+                 [--merge-file OTHER_FILE] [--modify-expr FIELD EXPR]
+                 [--modify-field FIELD PATTERN REPLACE] [--move-selected {BOTTOM,TOP}]
+                 [--ms-import] [--ms-import-filter FIELD PATTERN] [--ms-import-rc]
+                 [--ms-import-rc-filter FIELD PATTERN] [--ms-remove-namespace]
+                 [--remove-all-tags] [--remove-comments] [--remove-selected]
+                 [--remove-unused-styles] [--selection-add FIELD PATTERN]
+                 [--selection-add-expr EXPR] [--selection-clear]
+                 [--selection-intersect FIELD PATTERN] [--selection-intersect-expr EXPR]
+                 [--selection-set FIELD PATTERN] [--selection-set-expr EXPR]
+                 [--selection-subtract FIELD PATTERN] [--selection-subtract-expr EXPR]
+                 [--set-script-info FIELD VALUE] [--shift EXPR]
+                 [--sort-expr EXPR {ASC,DESC}] [--sort-field FIELD {ASC,DESC}]
+                 [--use-events] [--use-styles] [-i INPUT] [-o OUTPUT] [--in-place]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT, --input INPUT
+                        Specify input file (default: stdin)
+  -o OUTPUT, --output OUTPUT
+                        Specify output file (default: stdout)
+  --in-place            Perform operations in place
+
+Subtitles:
+  --fps FPS             Set the fps to use for the frames() function. Default is 24000/1001.
+                        Output type: Subtitles.
+  --get-field FIELD     Returns the given field from all lines in the current selection as
+                        text, newline separated. Output type: Text.
+  --keep-selected       Remove all lines not in the current selection. Clears the selection.
+                        Output type: Subtitles.
+  --merge-file OTHER_FILE
+                        Append the styles and event lines from another file. Output type:
+                        Subtitles.
+  --modify-expr FIELD EXPR
+                        Replace the value of the given field on all lines in the selection
+                        with the result of the given expression. Output type: Subtitles.
+  --modify-field FIELD PATTERN REPLACE
+                        Replace occurrences of pattern with the given replacement string in
+                        the given field on all lines in the current selection. Accepts
+                        regular expressions. Output type: Subtitles.
+  --move-selected {BOTTOM,TOP}
+                        Move all selected lines to the top or bottom of the current section.
+                        Output type: Subtitles.
+  --ms-import           Import files according to import definitions in a file using Merge
+                        Scripts syntax. Discards styles and lines already imported from
+                        external files. Imported styles will be prefixed by a namespace
+                        identifier, e.g. 1$Default. Output type: Subtitles.
+  --ms-import-filter FIELD PATTERN
+                        Import files according to import definitions in a file using Merge
+                        Scripts syntax. Discards styles and lines already imported from
+                        external files. Imported styles will be prefixed by a namespace
+                        identifier, e.g. 1$Default. Only import files corresponding to
+                        import definitions matching the given pattern. Output type:
+                        Subtitles.
+  --ms-import-rc        Equivalent to --ms-import --remove-comments --remove-unused-styles
+                        --ms-remove-namespace. Output type: Subtitles.
+  --ms-import-rc-filter FIELD PATTERN
+                        Equivalent to --ms-import-filter FIELD PATTERN --remove-comments
+                        --remove-unused-styles --ms-remove-namespace. Output type:
+                        Subtitles.
+  --ms-remove-namespace
+                        Remove namespace identifiers from style names (e.g. change 1$Default
+                        to Default). Output type: Subtitles.
+  --remove-all-tags     Remove all tags (everything in the text field enclosed in {}) from
+                        all dialogue lines. No-op if current section is not the events
+                        section. Output type: Subtitles.
+  --remove-comments     Removes all commented lines in current selection. Clears the
+                        selection if the current selection is the events section. Output
+                        type: Subtitles.
+  --remove-selected     Remove all lines in the current selection. Clears the selection.
+                        Output type: Subtitles.
+  --remove-unused-styles
+                        Remove all styles not used in any dialogue lines. Clears the
+                        selection if the current section is the styles section. Output type:
+                        Subtitles.
+  --selection-add FIELD PATTERN
+                        Set the selection to the union of the current selection and all
+                        lines in the current section for which the given field matches the
+                        given regex pattern. Output type: Subtitles.
+  --selection-add-expr EXPR
+                        Set the selection to the union of the current selection and all
+                        lines in the current section for which expr returns true. Output
+                        type: Subtitles.
+  --selection-clear     Reset the selection (select all lines). Output type: Subtitles.
+  --selection-intersect FIELD PATTERN
+                        Set the selection to the intersection of the current selection and
+                        all lines in the current section for which the given field matches
+                        the given regex pattern. Output type: Subtitles.
+  --selection-intersect-expr EXPR
+                        Set the selection to the intersection of the current selection and
+                        all lines in the current section for which expr returns true. Output
+                        type: Subtitles.
+  --selection-set FIELD PATTERN
+                        Set the selection to all lines in the current section for which the
+                        given field matches the given regex pattern. Output type: Subtitles.
+  --selection-set-expr EXPR
+                        Set the selection to the lines in the current section for which expr
+                        returns true. Output type: Subtitles.
+  --selection-subtract FIELD PATTERN
+                        Set the selection to the current selection, minus all lines in the
+                        current section for which the given field matches the given regex
+                        pattern. Output type: Subtitles.
+  --selection-subtract-expr EXPR
+                        Set the selection to the current selection, minus all lines in the
+                        current section for which expr returns true. Output type: Subtitles.
+  --set-script-info FIELD VALUE
+                        Output type: Subtitles.
+  --shift EXPR          Shifts the start and end time by a specified amount. Example:
+                        --shift "secs(-10)". Output type: Subtitles.
+  --sort-expr EXPR {ASC,DESC}
+                        Sort all lines in the current selection based on the return value of
+                        expr, either ascending or descending. Output type: Subtitles.
+  --sort-field FIELD {ASC,DESC}
+                        Sort all lines in the current selection based on the given field,
+                        either ascending or descending. Output type: Subtitles.
+  --use-events          Set the current section to the events section. Output type:
+                        Subtitles.
+  --use-styles          Set the current section to the styles section. Output type:
+                        Subtitles.
+```
+
 ### Installation
 
 Install Sub Digest with pip:

@@ -698,7 +698,7 @@ pip install --user git+https://github.com/TypesettingTools/Myaamori-Aegisub-Scri
 ```
 
 This will add a `fontvalidator` executable along with the `fontvalidator.py` Python module.
-If the executable is not in your path, you can run Sub Digest as `python -m fontvalidator --help`, or alternatively `py -3 -m fontvalidator --help` on Windows.
+If the executable is not in your path, you can run Font Validator as `python -m fontvalidator --help`, or alternatively `py -3 -m fontvalidator --help` on Windows.
 
 ### Common issues and how to fix them
 

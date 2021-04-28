@@ -20,6 +20,11 @@ logging.basicConfig(format="%(name)s: %(message)s")
 TAG_PATTERN = re.compile(r"\\\s*([^(\\]+)(?<!\s)\s*(?:\(\s*([^)]+)(?<!\s)\s*)?")
 INT_PATTERN = re.compile(r"^[+-]?\d+")
 LINE_PATTERN = re.compile(r"(?:\{(?P<tags>[^}]*)\}?)?(?P<text>[^{]*)")
+TEXT_REPLACEMENTS = {
+    '\\n': ' ',
+    '\\N': ' ',
+    '\\h': '\u00a0'
+}
 
 State = collections.namedtuple("State", ["font", "italic", "weight", "drawing"])
 
@@ -87,13 +92,18 @@ def parse_tags(s, state, line_style, styles):
 
     return state
 
+def parse_text(text):
+    for search, sub in TEXT_REPLACEMENTS.items():
+        text = text.replace(search, sub)
+    return text
+
 def parse_line(line, line_style, styles):
     state = line_style
     for tags, text in LINE_PATTERN.findall(line):
         if len(tags) > 0:
             state = parse_tags(tags, state, line_style, styles)
         if len(text) > 0:
-            yield state, text
+            yield state, parse_text(text)
 
 
 class Font:
@@ -116,6 +126,7 @@ class Font:
                              for name in self.names if name.nameID == 1]
         self.full_names = [name.string.decode('utf_16_be')
                            for name in self.names if name.nameID == 4]
+        self.postscript_name = ''
 
         for name in self.font["name"].names:
             if name.nameID == 6 and (encoding := encodingTools.getEncoding(
@@ -127,7 +138,7 @@ class Font:
                         [(1, 0, 0), (3, 1, 0x409)]:
                     break
 
-        self.exact_names = [self.postscript_name] if self.postscript else self.full_names
+        self.exact_names = [self.postscript_name] if (self.postscript and self.postscript_name) else self.full_names
 
         mac_italic = self.font["head"].macStyle & 0b10 > 0
         if mac_italic != self.italic:
@@ -287,7 +298,8 @@ def validate_fonts(doc, fonts, ignore_drawings=False, warn_on_exact=False):
 
     for font, lines in sorted(report["missing_glyphs_lines"].items(), key=lambda x: x[0]):
         issues += 1
-        print(f"- Font {font} is missing glyphs {''.join(sorted(report['missing_glyphs'][font]))} " \
+        missing = ' '.join(f'{g}(U+{ord(g):04X})' for g in sorted(report['missing_glyphs'][font]))
+        print(f"- Font {font} is missing glyphs {missing} " \
               f"on line(s): {format_lines(lines)}")
 
     print(f"{issues} issue(s) found")

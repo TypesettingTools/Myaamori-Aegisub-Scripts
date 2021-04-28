@@ -20,11 +20,7 @@ logging.basicConfig(format="%(name)s: %(message)s")
 TAG_PATTERN = re.compile(r"\\\s*([^(\\]+)(?<!\s)\s*(?:\(\s*([^)]+)(?<!\s)\s*)?")
 INT_PATTERN = re.compile(r"^[+-]?\d+")
 LINE_PATTERN = re.compile(r"(?:\{(?P<tags>[^}]*)\}?)?(?P<text>[^{]*)")
-TEXT_REPLACEMENTS = {
-    '\\n': ' ',
-    '\\N': ' ',
-    '\\h': '\u00a0'
-}
+TEXT_WHITESPACE_PATTERN = re.compile(r"\\[nNh]")
 
 State = collections.namedtuple("State", ["font", "italic", "weight", "drawing"])
 
@@ -93,9 +89,7 @@ def parse_tags(s, state, line_style, styles):
     return state
 
 def parse_text(text):
-    for search, sub in TEXT_REPLACEMENTS.items():
-        text = text.replace(search, sub)
-    return text
+    return TEXT_WHITESPACE_PATTERN.sub(' ', text)
 
 def parse_line(line, line_style, styles):
     state = line_style

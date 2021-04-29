@@ -136,7 +136,9 @@ class Font:
                         [(1, 0, 0), (3, 1, 0x409)]:
                     break
 
-        self.exact_names = [self.postscript_name] if (self.postscript and self.postscript_name) else self.full_names
+        exact_names = [self.postscript_name] if (self.postscript and self.postscript_name) else self.full_names
+        self.exact_names = [name for name in exact_names
+                            if all(name.lower() != family.lower() for family in self.family_names)]
 
         mac_italic = self.font["head"].macStyle & 0b10 > 0
         if mac_italic != self.italic:

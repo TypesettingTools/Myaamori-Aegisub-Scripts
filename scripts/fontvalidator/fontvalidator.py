@@ -138,6 +138,9 @@ class Font:
         if mac_italic != self.italic:
             print(f"warning: different italic values in macStyle and fsSelection for font {self.postscript_name}")
 
+        # fail early if glyph tables can't be accessed
+        self.missing_glyphs('')
+
     def missing_glyphs(self, text):
         if (uniTable := self.font.getBestCmap()):
             return [c for c in text

@@ -30,6 +30,12 @@ def parse_int(s):
     else:
         return 0
 
+def strip_fontname(s):
+    if s.startswith('@'):
+        return s[1:]
+    else:
+        return s
+
 def parse_tags(s, state, line_style, styles):
     for match in TAG_PATTERN.finditer(s):
         value, paren = match.groups()
@@ -49,10 +55,8 @@ def parse_tags(s, state, line_style, styles):
         if (args := get_tag("fn")) is not None:
             if len(args) == 0:
                 font = line_style.font
-            elif args[0].startswith("@"):
-                font = args[0][1:]
             else:
-                font = args[0]
+                font = strip_fontname(args[0])
             state = state._replace(font=font)
         elif (args := get_tag("b", "blur", "be", "bord")) is not None:
             weight = None if len(args) == 0 else parse_int(args[0])
@@ -220,7 +224,7 @@ def validate_fonts(doc, fonts, ignore_drawings=False, warn_on_exact=False):
         "mismatch_italic": collections.defaultdict(set)
     }
 
-    styles = {style.name: State(style.fontname, style.italic, 700 if style.bold else 400, False)
+    styles = {style.name: State(strip_fontname(style.fontname), style.italic, 700 if style.bold else 400, False)
               for style in doc.styles}
     for i, line in enumerate(doc.events):
         if isinstance(line, ass.Comment):

@@ -404,6 +404,7 @@ def get_fonts(mkv):
             for attachment in get_dicts(attachments, "AttachedFile"):
                 if attachment["FileMimeType"].value not in FONT_MIMETYPES:
                     print(f"Ignoring non-font attachment {attachment['FileName'].value}")
+                    continue
 
                 fonts.append((attachment["FileName"].value,
                               io.BytesIO(attachment["FileData"].value)))

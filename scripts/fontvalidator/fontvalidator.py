@@ -323,6 +323,11 @@ def get_dicts(parent, element, id=False):
     return ({x.name: x for x in elem} for elem in get_elements(parent, element, id=id))
 
 
+def normalize_mimetype(mimetype):
+    if isinstance(mimetype, str):
+        return bytes(mimetype, encoding="raw_unicode_escape")
+    return mimetype
+
 def get_subtitles(mkv):
     subtitles = []
 
@@ -330,7 +335,7 @@ def get_subtitles(mkv):
         tracks_to_read = {}
         tracks = get_element(segment, "Tracks")
         for track in get_dicts(tracks, "TrackEntry"):
-            if track["CodecID"].value != b'S_TEXT/ASS':
+            if normalize_mimetype(track["CodecID"].value) != b'S_TEXT/ASS':
                 continue
 
             compression = False
@@ -402,7 +407,7 @@ def get_fonts(mkv):
     for segment in get_elements(mkv, "Segment"):
         for attachments in get_elements(segment, "Attachments"):
             for attachment in get_dicts(attachments, "AttachedFile"):
-                if attachment["FileMimeType"].value not in FONT_MIMETYPES:
+                if normalize_mimetype(attachment["FileMimeType"].value) not in FONT_MIMETYPES:
                     print(f"Ignoring non-font attachment {attachment['FileName'].value}")
                     continue
 

@@ -4,11 +4,13 @@ import collections
 import io
 import itertools
 import logging
-import os.path
+import os
+import shutil
 import pathlib
 import re
 import sys
 import zlib
+import mimetypes
 
 import ass
 import ebmlite
@@ -105,8 +107,13 @@ def parse_line(line, line_style, styles):
 
 
 class Font:
-    def __init__(self, fontfile, font_number=0):
+    def __init__(self, fontfile, mimetype, font_number=0):
         self.fontfile = fontfile
+        
+        if isinstance(self.fontfile, io.BytesIO):
+            self.font_data = self.fontfile.getvalue()
+        
+        self.mimetype = mimetype
         self.font = ttFont.TTFont(fontfile, fontNumber=font_number)
         self.num_fonts = getattr(self.font.reader, "numFonts", 1)
         self.postscript = self.font.has_key("CFF ")
@@ -172,13 +179,13 @@ class Font:
 class FontCollection:
     def __init__(self, fontfiles):
         self.fonts = []
-        for name, f in fontfiles:
+        for name, f, mimetype in fontfiles:
             try:
-                font = Font(f)
+                font = Font(f, mimetype)
                 self.fonts.append(font)
                 if font.num_fonts > 1:
                     for i in range(1, font.num_fonts):
-                        self.fonts.append(Font(f, font_number=i))
+                        self.fonts.append(Font(f, mimetype, font_number=i))
             except Exception as e:
                 print(f"Error reading {name}: {e}")
 
@@ -214,6 +221,66 @@ class FontCollection:
             self.cache[s] = font
             return font
 
+def list_required_fonts(docs, fonts, ignore_drawings=False, collect_dir=None):
+    required_fonts = set()
+    
+    for doc in docs:
+        styles = {style.name: State(strip_fontname(style.fontname), style.italic, 700 if style.bold else 400, False)
+                for style in doc.styles}
+        for i, line in enumerate(doc.events):
+            if isinstance(line, ass.Comment):
+                continue
+
+            try:
+                style = styles[line.style]
+            except KeyError:
+                print(f"Warning: Unknown style {line.style} on line {i + 1}; assuming default style")
+                style = State("Arial", False, 400, False)
+
+            for state, text in parse_line(line.text, style, styles):
+                font, exact_match = fonts.match(state)
+
+                if ignore_drawings and state.drawing:
+                    continue
+                
+                required_fonts.add((state.font, font))
+    
+    if not required_fonts:
+        return
+    
+    if collect_dir:
+        try:
+            os.mkdir(collect_dir)
+        except FileExistsError:
+            pass
+    
+    processed_font_objs = set()
+    processed_font_names = set()
+    
+    for font_name, font_obj in required_fonts:
+        if font_obj is not None and font_obj in processed_font_objs:
+            continue
+        
+        if font_name.lower() in processed_font_names:
+            continue
+        
+        if collect_dir:
+            if font_obj is not None:
+                if isinstance(font_obj.fontfile, str):
+                    target_file = os.path.join(collect_dir, os.path.basename(font_obj.fontfile))
+                    shutil.copy2(font_obj.fontfile, collect_dir)
+                else:
+                    target_file = os.path.join(collect_dir, f"{font_obj.postscript_name or font_name}{FONT_MIMETYPES[font_obj.mimetype]}")
+                    with open(target_file, "wb") as f:
+                        f.write(font_obj.font_data)
+                print(f"Collected '{font_name}' and saved as '{os.path.realpath(target_file)}'")
+            else:
+                print(f"Warning: '{font_name}' could not get collected")
+        else:
+            print(font_name)
+        
+        processed_font_objs.add(font_obj)
+        processed_font_names.add(font_name.lower())
 
 def validate_fonts(doc, fonts, ignore_drawings=False, warn_on_exact=False):
     report = {
@@ -390,15 +457,15 @@ def get_subtitles(mkv):
 
 # from mpv
 FONT_MIMETYPES = {
-    b"application/x-truetype-font",
-    b"application/vnd.ms-opentype",
-    b"application/x-font-ttf",
-    b"application/x-font",
-    b"application/font-sfnt",
-    b"font/collection",
-    b"font/otf",
-    b"font/sfnt",
-    b"font/ttf"
+    b"application/x-truetype-font": ".ttf",
+    b"application/vnd.ms-opentype": ".otf",
+    b"application/x-font-ttf": ".ttf",
+    b"application/x-font": ".ttf",
+    b"application/font-sfnt": ".ttf",
+    b"font/collection": ".ttc",
+    b"font/otf": ".otf",
+    b"font/sfnt": ".ttf",
+    b"font/ttf": ".ttf"
 }
 
 def get_fonts(mkv):
@@ -407,12 +474,15 @@ def get_fonts(mkv):
     for segment in get_elements(mkv, "Segment"):
         for attachments in get_elements(segment, "Attachments"):
             for attachment in get_dicts(attachments, "AttachedFile"):
-                if normalize_mimetype(attachment["FileMimeType"].value) not in FONT_MIMETYPES:
+                mimetype = normalize_mimetype(attachment["FileMimeType"].value)
+                
+                if mimetype not in FONT_MIMETYPES:
                     print(f"Ignoring non-font attachment {attachment['FileName'].value}")
                     continue
-
+                
                 fonts.append((attachment["FileName"].value,
-                              io.BytesIO(attachment["FileData"].value)))
+                              io.BytesIO(attachment["FileData"].value),
+                              mimetype))
 
     return fonts
 
@@ -435,6 +505,10 @@ May be a Matroska file with fonts attached, a directory containing font files, o
                         help="Don't warn about missing fonts only used for drawings.")
     parser.add_argument('--warn-fullname-mismatch', action='store_true', default=False,
                         help="Warn about mismatched styles even when using the full font name.")
+    parser.add_argument('--list-required-fonts', action='store_true', default=False,
+                        help="Show a list of all the required fonts for the script.")
+    parser.add_argument('--collect-required-fonts', metavar='<output_directory>', type=str,
+                        help="Collect the required fonts for the script.")
     args = parser.parse_args()
 
     schema = ebmlite.loadSchema("matroska.xml")
@@ -451,15 +525,32 @@ May be a Matroska file with fonts attached, a directory containing font files, o
     for additional_fonts in args.additional_fonts:
         path = pathlib.Path(additional_fonts)
         if path.is_dir():
-            fontlist.extend((p.name, str(p)) for p in path.iterdir() if p.is_file())
+            fontlist.extend((p.name, str(p), mimetypes.guess_type(p.name)[0]) for p in path.iterdir() if p.is_file())
         elif is_mkv(additional_fonts):
             fontmkv = schema.load(additional_fonts)
             fontlist.extend(get_fonts(fontmkv))
         else:
-            fontlist.append((path.name, additional_fonts))
+            mimetype = mimetypes.guess_type(path.name)[0]
+            fontlist.append((path.name, additional_fonts, mimetype))
 
     issues = False
+    
+    if args.list_required_fonts or args.collect_required_fonts:
+        class HideFontToolsLogging(logging.Logger):
+            def __init__(self, name):
+                logging.Logger.__init__(self, name)
+                
+                if name.startswith("fontTools"):
+                    self.disabled = True
+        logging.setLoggerClass(HideFontToolsLogging)
+
     fonts = FontCollection(fontlist)
+    
+    if args.list_required_fonts or args.collect_required_fonts:
+        docs = map(lambda x: x[1], subtitles)
+        list_required_fonts(docs, fonts, args.ignore_drawings, args.collect_required_fonts)
+        return 0
+    
     for name, doc in subtitles:
         print(f"Validating track {name}")
         issues = issues or validate_fonts(doc, fonts, args.ignore_drawings, args.warn_fullname_mismatch)

@@ -117,7 +117,8 @@ class Subtitles:
 
     def _get_selection(self):
         if self.selection is None:
-            return self._get_section()
+            # return copy of section contents as list
+            return [line for line in self._get_section()]
 
         return [line for i, line in enumerate(self._get_section())
                 if i in self.selection]
@@ -130,15 +131,17 @@ class Subtitles:
                 if i not in self.selection]
 
     def _process_selection(self, f):
+        lines = self._get_selection()
+
         if self.selection is None:
-            f(self._get_section())
+            indices = [i for i, line in enumerate(lines)]
         else:
             indices = sorted(self.selection)
-            lines = self._get_selection()
-            f(lines)
-            section = self._get_section()
-            for i, line in zip(indices, lines):
-                section[i] = line
+
+        f(lines)
+        section = self._get_section()
+        for i, line in zip(indices, lines):
+            section[i] = line
 
     @filter
     def use_styles(self) -> Subtitles:

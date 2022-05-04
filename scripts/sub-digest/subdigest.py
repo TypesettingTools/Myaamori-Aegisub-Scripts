@@ -118,7 +118,7 @@ class Subtitles:
     def _get_selection(self):
         if self.selection is None:
             # return copy of section contents as list
-            return [line for line in self._get_section()]
+            return list(self._get_section())
 
         return [line for i, line in enumerate(self._get_section())
                 if i in self.selection]

@@ -134,7 +134,7 @@ class Subtitles:
         lines = self._get_selection()
 
         if self.selection is None:
-            indices = [i for i, line in enumerate(lines)]
+            indices = range(len(lines))
         else:
             indices = sorted(self.selection)
 

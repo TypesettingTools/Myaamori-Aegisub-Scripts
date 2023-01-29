@@ -1,7 +1,7 @@
 
 export script_name = "Paste From Pad"
 export script_description = "Paste text from pad over existing lines"
-export script_version = "0.0.2"
+export script_version = "0.0.3"
 export script_author = "Myaamori"
 export script_namespace = "myaa.PasteFromPad"
 
@@ -19,7 +19,9 @@ ConfigHandler = DependencyControl\getConfigHandler {
         separator: ":",
         comment: "#",
         include_blank: false,
-        always_separate: true
+        always_separate: true,
+        strip_tags: false,
+        break_lines: false
     }
 }
 settings = ConfigHandler.c.settings
@@ -117,6 +119,16 @@ copy = (subtitles, selected_lines)->
             class: "checkbox", label: "Always include separator", value: settings.always_separate,
             hint: "Includes actor separator even if the actor field is empty",
             name: "always_separate", x: 0, y: 2, width: 30, height: 1
+        },
+        {
+            class: "checkbox", label: "Strip tags", value: settings.strip_tags,
+            hint: "Removes {comments} and {\\override\\tags}",
+            name: "strip_tags", x: 0, y: 3, width: 15, height: 1
+        },
+        {
+            class: "checkbox", label: "Break lines", value: settings.strip_tags,
+            hint: "Replaces \\N tags with actual newlines"
+            name: "break_lines", x: 15, y: 3, width: 15, height: 1
         }
     }
 
@@ -127,11 +139,18 @@ copy = (subtitles, selected_lines)->
     settings.separator = result.separator
     settings.comment = result.comment
     settings.always_separate = result.always_separate
+    settings.strip_tags = result.strip_tags
+    settings.break_lines = result.break_lines
     ConfigHandler\write!
 
     text = {}
     for i in *selected_lines
         line = subtitles[i]
+
+        if result.strip_tags
+            line.text = line.text\gsub "{[^}]*}",  ""
+        if result.break_lines
+            line.text = line.text\gsub "\\[Nn]",  "\n"
 
         if line.comment
             table.insert text, "#{result.comment}#{line.text}"

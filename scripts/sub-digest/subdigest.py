@@ -274,11 +274,13 @@ class Subtitles:
         self.sub_file.events.extend(f.events)
         existing_styles = {style.name: style.dump() for style in self.sub_file.styles}
         for style in f.styles:
-            if style.name in existing_styles and style.dump() != existing_styles[style.name]:
-                print(f"Warning: Ignoring style {style.name} from "
-                      f"{other_file.name}.", file=sys.stderr)
-                continue
-            self.sub_file.styles.append(style)
+            if style.name in existing_styles:
+                if style.dump() != existing_styles[style.name]:
+                    print(f"Warning: Ignoring style {style.name} from "
+                          f"{other_file.name}.", file=sys.stderr)
+                    continue
+            else:
+                self.sub_file.styles.append(style)
         return self
 
     def _import_file(self, imp_definition, styles, events, fields):

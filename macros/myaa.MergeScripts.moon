@@ -400,6 +400,10 @@ generate_release = (subtitles, selected_lines, active_line)->
             clashing_styles = true
             continue
 
+        -- do not add duplicate styles into filtered_styles
+        if #added_styles[style.name] >= 2
+            continue
+
         table.insert filtered_styles, style
 
     lines.style = filtered_styles
